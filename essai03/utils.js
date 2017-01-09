@@ -4,31 +4,45 @@ var xmlhttp;
 function httpGet(url,callback)
 {
   xmlhttp = new XMLHttpRequest();
-  if ("withCredentials" in xmlhttp) {
+
+  if ("withCredentials" in xmlhttp)
+  {
     // Check if the XMLHttpRequest object has a "withCredentials" property.
     // "withCredentials" only exists on XMLHTTPRequest2 objects.
     //alert("withCredentials");
-	xmlhttp.open("GET", url, true);
-  } else if (typeof XDomainRequest != "undefined") {
+    xmlhttp.open("GET", url, true);
+  }
+  else if (typeof XDomainRequest != "undefined")
+  {
     // Otherwise, check if XDomainRequest.
     // XDomainRequest only exists in IE, and is IE's way of making CORS requests.
     xmlhttp = new XDomainRequest();
 	//alert("XDomainRequest");
     xmlhttp.open("GET", url);
-  } else {
+  }
+  else
+  {
     // Otherwise, CORS is not supported by the browser.
     xmlhttp = null;
-	alert("cors crossdomain not supported by browser");
-	return;
+    alert("cors crossdomain not supported by browser");
+    return;
   }
-    xmlhttp.onreadystatechange=function()
+
+  xmlhttp.onreadystatechange = function()
+  {
+    console.log("onreadystatechange()");
+    if(xmlhttp.readyState==4 && xmlhttp.status==200)
     {
-        if (xmlhttp.readyState==4 && xmlhttp.status==200)
-        {callback(xmlhttp.responseText);
-        }
+      callback(xmlhttp.responseText);
     }
-    //xmlhttp.open("GET", theUrl, false);
-    xmlhttp.send();
+    else
+    {
+      console.log("onreadystatechange() Abort, no callback called");
+    }
+  }
+
+  //xmlhttp.open("GET", theUrl, false);
+  xmlhttp.send();
 }
 
 function dbg(msg)

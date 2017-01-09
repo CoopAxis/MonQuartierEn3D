@@ -229,24 +229,33 @@ shadows with normals without depth texture for basic webgl -->
 
 
 
-<script type="text/javascript">
 
-var osm = new Osm();
-var lat = 48.826125291730506 ;
-var lon = 2.3570559500472212 ;
-//var dist = 0.000001 ;
-var dist = 0.000010 ;
-//osm.getways( lat, lon, dist );
+
+
+
+
+
+
+
+<script type="text/javascript">
 
 var windx=600, windy=400;
 
-var dlat=0.005,dlon=0.008;
+var osm = new Osm();
+var lat = 47.38994 ;
+var lng = 0.69366 ;
 
-var lat= 47.38994 ;
-var lng= 0.69366 ;
 
-var lat1=lat-dlat/2,lon1=lng-dlon/2;
-var lat2=lat+dlat/2,lon2=lng+dlon/2;
+// Angle de la caméra (tourner avec touches flèches droite et gauche)
+var o1 = 0;
+
+// Distance de lat et lon pour rectangle de donnes OSM
+var dlat=0.0010,dlon=0.0014;
+// Les coordonnées du rectangle de données OSM
+var lat1=lat-dlat/2,
+  lon1=lng-dlon/2;
+var lat2=lat+dlat/2,
+  lon2=lng+dlon/2;
 
 var wayjson,nodejson,ways,waynodes,nodes,waytype;
 var latnodes=[],lonnodes=[];
@@ -342,29 +351,17 @@ function draw(){
   context.fill();}
   }}
   context.fillStyle = '#ff0000';
-  context.fillText("lat="+lat1+" lon="+lon1,20,20);
+  context.fillText("lat="+lat1+" lng="+lon1,20,20);
   context.fillText("nways="+i+" nnodes="+nnode,20,40);
   //alert("drawways="+i);
 }
+
 function timer(){
-return Date.now();
-//return (new Date()).getTime();//ms
+  return Date.now();
+  //return (new Date()).getTime();//ms
 }
-var keys=new Array(256),keys0=new Array(256),tkeys=new Array(256),tkey=0;
-var pkeys=new Array(256);
-function resetkeys(){
-for(var i=0;i<256;i++){keys[i]=0;keys0[i]=0;tkeys[i]=0;}
-}
-resetkeys();
-function keydown(e){
-var key=eval(e.which || e.keyCode)
-var t=timer();
-if(key>0 && key<256){keys[key]=1;tkeys[key]=t;keys0[key]=1;}
-}
-function keyup(e){
-var key=eval(e.which || e.keyCode)
-if(key>0 && key<256){keys[key]=0;keys0[key]=0;}
-}
+
+
 function subhelp(){
 var crlf=String.fromCharCode(13)+String.fromCharCode(10);
 var msg="H => help "+crlf;
@@ -376,36 +373,97 @@ msg+="pageup/pagedown => look up/down"+crlf;
 alert(msg);
 document.getElementById('msg').focus();
 }
+
 var quit=0,tmsg=0,lat0=lat,lng0=lng,latx=lat,lngx=lng;
 var scale=0.3*windy/dlat,x0=x,y0=y,tmove=0;
+
 function close(){quit=1;}
+
 var tmap=0,dxmax=20;//12;
 
-function testkeys(){
-  var test=0,v=0.0000002*dtime;
-  if(keys[vk_up]){latx+=v*sin1;lngx+=v*cos1*klon;test=1;}
-  if(keys[vk_down]){latx-=v*sin1;lngx-=v*cos1*klon;test=1;}
-  if(keys[vk_left]){o1+=dtime*0.04;}
-  if(keys[vk_right]){o1-=dtime*0.04;}
+
+
+var keys=new Array(256),keys0=new Array(256),tkeys=new Array(256),tkey=0;
+var pkeys=new Array(256);
+
+function resetkeys(){
+  for(var i=0;i<256;i++){keys[i]=0;keys0[i]=0;tkeys[i]=0;}
+}
+resetkeys();
+
+function keydown(e){
+  var key = eval(e.which || e.keyCode);
+  if(key>0 && key<256)
+  {
+    keys[key]=1;
+    tkeys[key] = timer() ;
+    keys0[key]=1;
+  }
+}
+
+function keyup(e){
+  var key=eval(e.which || e.keyCode)
+  if(key>0 && key<256){
+    keys[key]=0;
+    keys0[key]=0;
+  }
+}
+
+function testkeys()
+{
+  var test=0,
+    v=0.0000002*dtime;
+
+  if(keys[vk_up]){
+    latx += v*sin1;
+    lngx += v*cos1*klon;
+    test=1;
+  }
+  if(keys[vk_down]){
+    latx -= v*sin1 ;
+    lngx -= v*cos1*klon;
+    test=1;
+  }
+  if(keys[vk_left]){
+    o1 += dtime*0.04 ;
+  }
+  if(keys[vk_right]){
+    o1 -= dtime*0.04 ;
+  }
+
   if(keys[vk_page_up]){o2+=dtime*0.04;}
   if(keys[vk_page_down]){o2-=dtime*0.04;}
   if(keys[vk_3]){keys[vk_3]=0;sizescreen();}
   if(keys[vk_h]){keys[vk_h]=0;subhelp();}
   if(keys[vk_g] && keys[vk_shift]){keys[vk_g]=0;geolocate();}
-  if(keys[vk_m]){tmap+=1;
-  if(tmap>3){tmap=0;
-  canvas.height = parseInt(canvasgl.height/3);
-  context.clearRect(0,0,windx,windy);}
-  else{canvas.height = parseInt(canvasgl.height);}
-  resetkeys();}
-  if(keys[vk_t] && keys[vk_shift]) {thour+=3.5;if(thour>24){thour-=24;};
-  hour=new Date().getHours()+thour;
-  while(hour>24){hour-=24;}
-  while(hour<0){hour+=24;}
-  updatesun();tmove=1;
-  alert("timehour = "+hour);resetkeys();}
+
+  if(keys[vk_m]){
+    tmap+=1;
+    if(tmap>3){
+      tmap=0;
+      canvas.height = parseInt(canvasgl.height/3);
+      context.clearRect(0,0,windx,windy);
+    }
+    else{
+      canvas.height = parseInt(canvasgl.height);
+    }
+    resetkeys();
+  }
+  if(keys[vk_t] && keys[vk_shift]) {
+    thour+=3.5;
+    if(thour>24){
+      thour-=24;
+    };
+    hour=new Date().getHours()+thour;
+    while(hour>24){hour-=24;}
+    while(hour<0){hour+=24;}
+    updatesun();tmove=1;
+    alert("timehour = "+hour);resetkeys();
+  }
+
   x=((lngx-lng0)/klon)*scale;
   y=(latx-lat0)*scale;
+
   if(tmove==0){tmove=test;}
   if(test==1 && !osm.loading){
     test=0;
@@ -421,7 +479,7 @@ function testkeys(){
     //loading=2;
     osm.loading = false ;
     //resetkeys();
-    osm.getways( lat, lon, dist );
+    osm.getways( lat, lng, dlat, dlon );
   }
   
   if(tframe>tmsg+200){
@@ -455,44 +513,55 @@ var xmin=-30000,xmax=30000,ymin=-30000,ymax=30000;
 var tframe=0,tframe0=0,tfps=30,fps=10,dtime=1,tmsg=0,clearr,clearg,clearb,tskip=0;
 var ttimeout=0,testloop=0,tskip2=0,tsrtm=0,itime=0;
 
-function tick(tt) {
-//requestAnimFrame(tick);
-itime+=1;if(itime>10000){itime=0;}
-if(quit==0 && testloop==0 && ttimeout==0){testloop=1;requestAnimationFrame(tick);
-}else{testloop=0;};
-testkeys();
-tskip=0;
-//if(x<xmin){x+=xmax-xmin;tskip=1;};
-//if(x>xmax){x-=xmax-xmin;tskip=1;};
-//if(y<ymin){y+=ymax-ymin;tskip=1;};
-//if(y>ymax){y-=ymax-ymin;tskip=1;};
-if(tframe<tskip2+100){tskip=1;}
-gl.clearColor(1,1,1, 1.0);
-if(tskip==0 && tmove==1 && (itime%5)==0){tmove=0;drawrttshadow();};
-if(tskip==0){drawScene();}
-if(tdraw==1){tdraw=0;drawgl();}
-if(tmap==1){tmap=2;draw();
-setTimeout("draw();",500);}
-if(tupdatesoltexture==1){
-tupdatesoltexture=0;
-latsol0=latsol;lngsol0=lngsol;
-handleLoadedTexture(solTexture);}
-tframe0=tframe;
-tframe=timer();
-dtime=tframe-tframe0;
-if(dtime>1000){dtime=1000;}
-tfps+=(tframe-tframe0-tfps)*0.2;
-if(tfps<1){tfps=1;}
-if(tfps>1000){tfps=1000;}
-fps=1000/tfps;
-var dt=(tframe0+25-tframe);
-if(dt<10){dt=10};
-if(quit==0 && ttimeout){timeouttick=setTimeout("tick(0);",dt);
-}else{
-//if(tclose==0){requestAnimationFrame(tick);};
-if(quit==0 && testloop==0){testloop=1;requestAnimFrame(tick);
-}else{testloop=0;};}
+/**
+ * La boucle du jeu
+ */
+function tick(tt)
+{
+  //requestAnimFrame(tick);
+  itime+=1;if(itime>10000){itime=0;}
+  if(quit==0 && testloop==0 && ttimeout==0){testloop=1;requestAnimationFrame(tick);
+  }else{testloop=0;};
+
+  testkeys();
+
+  tskip=0;
+  //if(x<xmin){x+=xmax-xmin;tskip=1;};
+  //if(x>xmax){x-=xmax-xmin;tskip=1;};
+  //if(y<ymin){y+=ymax-ymin;tskip=1;};
+  //if(y>ymax){y-=ymax-ymin;tskip=1;};
+  if(tframe<tskip2+100){tskip=1;}
+  gl.clearColor(1,1,1, 1.0);
+  if(tskip==0 && tmove==1 && (itime%5)==0){tmove=0;drawrttshadow();};
+  if(tskip==0){drawScene();}
+  if(tdraw==1){tdraw=0;drawgl();}
+  if(tmap==1){tmap=2;draw();
+  setTimeout("draw();",500);}
+  if(tupdatesoltexture==1){
+  tupdatesoltexture=0;
+  latsol0=latsol;lngsol0=lngsol;
+  handleLoadedTexture(solTexture);}
+  tframe0=tframe;
+  tframe=timer();
+  dtime=tframe-tframe0;
+  if(dtime>1000){dtime=1000;}
+  tfps+=(tframe-tframe0-tfps)*0.2;
+  if(tfps<1){tfps=1;}
+  if(tfps>1000){tfps=1000;}
+  fps=1000/tfps;
+  var dt=(tframe0+25-tframe);
+  if(dt<10){dt=10};
+  if(quit==0 && ttimeout){
+    timeouttick=setTimeout("tick(0);",dt);
+  }else{
+    //if(tclose==0){requestAnimationFrame(tick);};
+    if(quit==0 && testloop==0){
+      testloop=1;requestAnimFrame(tick);
+    }
+    else{testloop=0;};
+  }
 }
+
 //getways();
 document.getElementById('msg').focus();
 document.getElementById('msg').value="arrow keys => move";
@@ -503,7 +572,6 @@ var flytoname="initial";
 function subcombo(){
 icombo=document.getElementById('combo').selectedIndex;
 combotext = document.getElementById('combo')[icombo].id ;
-var o1=0;
 lat=flytolat;lng=flytolng;
 if (combotext=="deauville marinas"){lat=49.36198047661674   ;lng=0.07262960190958628   ;o1=120;}
 if (combotext=="deauville plage"){lat=49.35600551121942   ;lng=0.06075459446313726   ;o1=110;}
@@ -532,7 +600,7 @@ if (combotext=="washington"){lat=38.8850399;lng=-77.08054296;o1=36.3920;}
 if (combotext=="tajmahal"){lat=27.17015;lng=78.002155;o1=36.3920;}
 document.getElementById('msg').focus();
 latx=lat;lngx=lng;tmap=0;
-osm.getways( lat, lng, dist );
+osm.getways( lat, lng, dlat, dlon );
 }
 
 function degtorad(degrees) {
@@ -1872,7 +1940,7 @@ icombo=0;
 document.getElementById('combo')[icombo].text=flytoname;
 document.getElementById('combo').selectedIndex=icombo;
 latx=lat;lngx=lng;tmap=0;
-osm.getways( lat, lng, dist );
+osm.getways( lat, lng, dlat, dlon );
 } else {
 alert('Geolocation not found ! ' + status);
 }
@@ -1898,7 +1966,7 @@ var hour=new Date().getHours()+new Date().getMinutes()/60.0+ thour;
 while(hour>24){hour-=24;}
 while(hour<0){hour+=24;};
 updatesun();
-osm.getways( lat, lng, dist );
+osm.getways( lat, lng, dlat, dlon );
 setTimeout("initwebgl();",1000);
 </script>
 </body>

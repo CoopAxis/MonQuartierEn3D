@@ -80,7 +80,7 @@ var Osm = function()
     //this.loading = false ;
   }
 
-  this.getways = function( lat, lon, dist )
+  this.getways = function( lat, lon, dist_lat, dist_lon )
   {
 	  if(this.loading)
 	  {
@@ -93,10 +93,10 @@ var Osm = function()
 
     var latK = lonK = 1 ;
 
-	  var lat1= lat - latK*dist ;
-	  var lon1= lon - lonK*dist ;
-	  var lat2= lat + latK*dist ;
-	  var lon2= lon + lonK*dist ;
+	  var lat1= lat - latK * dist_lat ;
+	  var lon1= lon - lonK * dist_lon ;
+	  var lat2= lat + latK * dist_lat ;
+	  var lon2= lon + lonK * dist_lon ;
 
 	  var latlon="%28"+lat1+"%2C"+lon1+"%2C"+lat2+"%2C"+lon2+"%29";
 	  var keyway="(way[building]"+latlon+";way[highway~'motorway|trunk|primary|secondary|tertiary|unclassified|residential']"+latlon+")";
@@ -104,7 +104,8 @@ var Osm = function()
 
 	  try{
 		  httpGet(wayurl,this.waycallback);
-	  }catch(e){
+	  }
+	  catch(e){
 		  alert("error getways - "+e.toString() );
 		  this.loading = false ;
 	  }
@@ -112,29 +113,29 @@ var Osm = function()
 
   this.waycallback = function(r)
   {
+    dbg('waycallback()');
+
 	  //alert(r);
     wayjson=JSON.parse(r);
     var msg="",ntest=0;
     nnode=0;
     ways=null;
-    ways=wayjson.elements;
+    ways = wayjson.elements;
     msg+="len="+ways.length;
-    for(var i=0;i<ways.length;i++){
-     var way=(ways[i]);
-     /*msg+="/ "+way.type+" id="+way.id+" "
-     waytype="none";
-     if(way.tags){if(way.tags.highway){
-        waytype=way.tags.highway;}}
-     msg+=waytype;*/
-     for(var j=0;j<way.nodes.length;j++){
-        //if(i<2){msg+="/"+way.nodes[j];};
-	    nnode+=1;
-	    }
-     }
+    for(var i=0;i<ways.length;i++)
+    {
+      var way=(ways[i]);
+      /*msg+="/ "+way.type+" id="+way.id+" "
+      waytype="none";
+      if(way.tags){if(way.tags.highway){
+      waytype=way.tags.highway;}}
+      msg+=waytype;*/
+
+      nnode += way.nodes.length ;
+    }
     //alert("nnode="+nnode+" "+msg);
     //setTimeout("getnodes();",20);
-    var _this = this;
-    setTimeout( _this.getnodes ,20);
+    setTimeout( this.getnodes ,20);
   }
 
 };
