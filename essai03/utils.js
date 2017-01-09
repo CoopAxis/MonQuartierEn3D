@@ -31,3 +31,8 @@ function httpGet(url,callback)
     xmlhttp.send();
 }
 
+function dbg(msg)
+{
+  console.log(msg);
+}
+
