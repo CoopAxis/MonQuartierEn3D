@@ -4,12 +4,14 @@
 openstreetmap roads to html5 array
 shadows with normals without depth texture for basic webgl -->
 <head>
-<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
 </head>
 <body bgcolor="#FFFFFF" onunload="close();" onKeyUp="keyup(event);" onKeyDown="keydown(event);" >
+
 	<div id="mydiv" style="position:absolute;top:0px;left:0px;z-index:200;" >
 		<canvas id="canvas" style="border:none;top:0px;left:0px;" width="600" height="400"></canvas>
 	</div>
+
 	<div id="mydiv2" style="position:absolute;top:0px;left:0px;z-index:100;" >
 		<canvas id="canvasgl" style="border:red 1px solid;top:0px;left:0px;" width="600" height="400"></canvas>
 		<br />
@@ -44,249 +46,219 @@ shadows with normals without depth texture for basic webgl -->
 		</select>
 		<input type="text"  readonly="readonly" id="msg" maxlength="65" size="65" />
 	</div>
-	<script src="utils.js"></script>
-	<script src="osm.js"></script>
-	<script src="lib/base64binary.js"></script>
-	<script src="lib/glMatrix-0.9.5.min.js"></script>
-	<script src="lib/vk_keys.js"></script>
-	<script src="lib/webgl-utils.js"></script>
 
-	</script>
-	<script type="text/javascript">
-	var osm = new Osm();
-	var lat = 48.826125291730506 ;
-	var lon = 2.3570559500472212 ;
-	var dist = 0.000001 ;
-	osm.getways( lat, lon, dist );
-	function dbg(msg)
-	{
-	  console.log(msg);
-	}
-	</script>
+	<script src="utils.js" type="text/javascript"></script>
+	<script src="osm.js" type="text/javascript"></script>
+	<script src="lib/base64binary.js" type="text/javascript"></script>
+	<script src="lib/glMatrix-0.9.5.min.js" type="text/javascript"></script>
+	<script src="lib/vk_keys.js" type="text/javascript"></script>
+	<script src="lib/webgl-utils.js" type="text/javascript"></script>
 	<script src="https://maps.googleapis.com/maps/api/js?v=3" type="text/javascript" ></script>
 
-	<script src="lib/base64binary.js"></script>
-	<script src="lib/glMatrix-0.9.5.min.js"></script>
-	<script src="lib/vk_keys.js"></script>
-	<script src="lib/webgl-utils.js"></script>
-	<script id="shader-fs2" type="x-shader/x-fragment">
+	
+
+
+
+
+
+
+
+
+
+
+
+
+<script id="shader-fs2" type="x-shader/x-fragment">
+
 	precision lowp float;
 	//precision mediump float;
 	//precision highp float;
-
 	//varying vec2 vTextureCoord;
 	varying float z;
-
 	uniform sampler2D uSampler;
 	uniform vec4 ucolor;
 
-	vec4 encodefloatrgba( float v ) {//range 0.0 - 5000.0
+	vec4 encodefloatrgba( float v )
+	{//range 0.0 - 5000.0
 		if(v>5000.0){return vec4(1.0,1.0,1.0,1.0);}
 		vec4 enc = vec4(1.0, 255.0, 65025.0, 160581375.0) * v/5000.0;
 		enc = fract(enc);
 		enc -= enc.yzww * vec4(1.0/255.0,1.0/255.0,1.0/255.0,1.0/255.0);
 		return enc;
 	}
-	float decodefloatrgba( vec4 rgba ) {
-		return dot( rgba, vec4(1.0, 1.0/255.0, 1.0/65025.0, 1.0/160581375.0) )*5000.0;
+
+	float decodefloatrgba( vec4 rgba )
+	{
+  	return dot( rgba, vec4(1.0, 1.0/255.0, 1.0/65025.0, 1.0/160581375.0) )*5000.0;
 	}
 
-	void main(void) {
+  void main(void)
+	{
 		//gl_FragColor = texture2D(uSampler, vTextureCoord);
 		//float z=gl_FragCoord.z;
 		if(z<1.0){discard;}
-		else{
-			gl_FragColor=encodefloatrgba(z);
+    else{
+   		gl_FragColor=encodefloatrgba(z);
 		}
-	}
-	</script>
+  }
+</script>
+
 <script id="shader-vs2" type="x-shader/x-vertex">
-//precision lowp float;
-//precision highp float;
-attribute vec3 aVertexPosition;
-attribute vec2 aTextureCoord;
-attribute vec3 aVertexNormal;
+	//precision lowp float;
+	//precision highp float;
+	attribute vec3 aVertexPosition;
+	attribute vec2 aTextureCoord;
+	attribute vec3 aVertexNormal;
 
-uniform mat4 uMVMatrix;
-uniform mat4 uPMatrix;
+  uniform mat4 uMVMatrix;
+  uniform mat4 uPMatrix;
 
-//varying vec2 vTextureCoord;
-varying float z;
+	//varying vec2 vTextureCoord;
+  varying float z;
 
-void main(void) {
-vec4 xyz= uMVMatrix * vec4(aVertexPosition, 1.0);
-gl_Position = uPMatrix *xyz;
-vec2 vTextureCoord = aTextureCoord;
-vec3 normal=aVertexNormal;
-//z=-gl_Position.z;
-z=-xyz.z;
-if(z<1.0){z=0.0;}
-//z=floor(z*20.0)/20.0;
-z=z*z/5000.0;
-}
+	void main(void) {
+		vec4 xyz= uMVMatrix * vec4(aVertexPosition, 1.0);
+		gl_Position = uPMatrix *xyz;
+	  vec2 vTextureCoord = aTextureCoord;
+		vec3 normal=aVertexNormal;
+		//z=-gl_Position.z;
+		z=-xyz.z;
+		if(z<1.0){z=0.0;}
+		//z=floor(z*20.0)/20.0;
+		z=z*z/5000.0;
+	}
 </script>
+
 <script id="shader-fs" type="x-shader/x-fragment">
-precision lowp float;
-//precision mediump float;
-//precision highp float;
+	precision lowp float;
+	//precision mediump float;
+	//precision highp float;
 
-varying vec2 vTextureCoord;
-varying vec2 vTextureCoord2;
-varying float z;
-varying float light;
+	varying vec2 vTextureCoord;
+	varying vec2 vTextureCoord2;
+	varying float z;
+	varying float light;
 
-uniform sampler2D uSampler;
-uniform vec4 ucolor;
-uniform sampler2D uSampler2;
+	uniform sampler2D uSampler;
+	uniform vec4 ucolor;
+	uniform sampler2D uSampler2;
 
-float decodefloatrgba( vec4 rgba ) {
-return dot( (rgba), vec4(1.0, 1.0/255.0, 1.0/65025.0, 1.0/160581375.0) )*5000.0;
-}
+	float decodefloatrgba( vec4 rgba )
+	{
+	  return dot( (rgba), vec4(1.0, 1.0/255.0, 1.0/65025.0, 1.0/160581375.0) )*5000.0;
+	}
 
-void main(void) {
-gl_FragColor = texture2D(uSampler, vTextureCoord);
-if(ucolor.a>0.001){
-if(gl_FragColor.a<0.5){discard;}else{
-float s=vTextureCoord.y;
-float r,g,b;
-if(s<400.0){r=1.0;g=1.0;b=1.0;}
-else if(s<800.0){r=0.7;g=0.7;b=0.7;}
-else if(s<1200.0){r=0.4;g=0.4;b=0.4;}
-else if(s<1600.0){r=1.0;g=0.4;b=0.4;}
-else if(s<2000.0){r=0.7;g=0.7;b=1.5;}
-else if(s<2400.0){r=0.5;g=0.5;b=1.0;}
-else if(s<2800.0){r=1.0;g=1.0;b=0.5;}
-else if(s<3200.0){r=0.7;g=1.5;b=0.7;}
-else if(s<3600.0){r=0.5;g=1.0;b=0.5;}
-else{r=0.3;g=0.7;b=0.5;}
-vec4 xyz=texture2D(uSampler2, vTextureCoord2);
-float z0=decodefloatrgba(xyz);
-float light0=light;
-if(z>(z0+0.01)){light0=min(light0,0.4);}//shadow
-gl_FragColor.a*=ucolor.a;
-gl_FragColor.r*=ucolor.r*r*light0;
-gl_FragColor.g*=ucolor.g*g*light0;
-gl_FragColor.b*=ucolor.b*b*light0;
-}}
-//gl_FragColor = texture2D(uSampler2, vTextureCoord2);
-//if(z<0.0){discard;}
-}
+	void main(void)
+	{
+		gl_FragColor = texture2D(uSampler, vTextureCoord);
+		if(ucolor.a>0.001){
+	     if(gl_FragColor.a<0.5){discard;}else{
+		   float s=vTextureCoord.y;
+		   float r,g,b;
+		   if(s<400.0){r=1.0;g=1.0;b=1.0;}
+		   else if(s<800.0){r=0.7;g=0.7;b=0.7;}
+		   else if(s<1200.0){r=0.4;g=0.4;b=0.4;}
+		   else if(s<1600.0){r=1.0;g=0.4;b=0.4;}
+		   else if(s<2000.0){r=0.7;g=0.7;b=1.5;}
+		   else if(s<2400.0){r=0.5;g=0.5;b=1.0;}
+		   else if(s<2800.0){r=1.0;g=1.0;b=0.5;}
+		   else if(s<3200.0){r=0.7;g=1.5;b=0.7;}
+		   else if(s<3600.0){r=0.5;g=1.0;b=0.5;}
+		   else{r=0.3;g=0.7;b=0.5;}
+		   vec4 xyz=texture2D(uSampler2, vTextureCoord2);
+		   float z0=decodefloatrgba(xyz);
+		   float light0=light;
+		   if(z>(z0+0.01)){light0=min(light0,0.4);}//shadow
+		   gl_FragColor.a*=ucolor.a;
+		   gl_FragColor.r*=ucolor.r*r*light0;
+		   gl_FragColor.g*=ucolor.g*g*light0;
+		   gl_FragColor.b*=ucolor.b*b*light0;
+		 }}
+        //gl_FragColor = texture2D(uSampler2, vTextureCoord2);
+		//if(z<0.0){discard;}
+	}
 </script>
+
 <script id="shader-vs" type="x-shader/x-vertex">
-//precision lowp float;
-//precision highp float;
-attribute vec3 aVertexPosition;
-attribute vec2 aTextureCoord;
-attribute vec3 aVertexNormal;
 
-uniform mat4 uMVMatrix;
-uniform mat4 uPMatrix;
-uniform mat4 uMVMatrix2;
-uniform mat4 uPMatrix2;
-uniform vec3 uSunpos;
+	//precision lowp float;
+	//precision highp float;
+	attribute vec3 aVertexPosition;
+	attribute vec2 aTextureCoord;
+	attribute vec3 aVertexNormal;
 
-varying vec2 vTextureCoord;
-varying vec2 vTextureCoord2;
-varying float z;
-varying float light;
+	uniform mat4 uMVMatrix;
+	uniform mat4 uPMatrix;
+	uniform mat4 uMVMatrix2;
+	uniform mat4 uPMatrix2;
+	uniform vec3 uSunpos;
 
-void main(void) {
-//gl_Position = uPMatrix * (uMVMatrix * vec4(aVertexPosition, 1.0));
-gl_Position = (uMVMatrix * vec4(aVertexPosition, 1.0));
-vTextureCoord = aTextureCoord;
-vec3 normal=aVertexNormal;
-if((abs(uSunpos.x)+abs(uSunpos.y)+abs(uSunpos.z))<0.1){
-light=1.0;}
-else{
-vec3 lightdir=normalize(uSunpos-aVertexPosition);
-light=0.4+abs(dot(lightdir,normal))*0.6;}
-vec4 xyz=uMVMatrix2*vec4(aVertexPosition, 1.0);
-vec4 pxyz=uPMatrix2*xyz;
-z=-xyz.z;
-if(z<1.0){z=0.0;}
-//z=floor(z*20.0)/20.0;
-z=z*z/5000.0;
-float px=pxyz.x*0.5+0.5;
-float py=pxyz.y*0.5+0.5;
-vTextureCoord2.x=px;
-vTextureCoord2.y=py;
-if(px<0.02 || px>0.98 || py<0.02 || py>0.98){z=0.0;}
-//gl_Position=xyz;
-}
+  varying vec2 vTextureCoord;
+  varying vec2 vTextureCoord2;
+	varying float z;
+	varying float light;
+
+  void main(void)
+	{
+		//gl_Position = uPMatrix * (uMVMatrix * vec4(aVertexPosition, 1.0));
+		gl_Position = (uMVMatrix * vec4(aVertexPosition, 1.0));
+		vTextureCoord = aTextureCoord;
+		vec3 normal=aVertexNormal;
+		if((abs(uSunpos.x)+abs(uSunpos.y)+abs(uSunpos.z))<0.1){
+		    light=1.0;}
+		else{
+		    vec3 lightdir=normalize(uSunpos-aVertexPosition);
+			light=0.4+abs(dot(lightdir,normal))*0.6;}
+		vec4 xyz=uMVMatrix2*vec4(aVertexPosition, 1.0);
+		vec4 pxyz=uPMatrix2*xyz;
+		z=-xyz.z;
+		if(z<1.0){z=0.0;}
+		//z=floor(z*20.0)/20.0;
+		z=z*z/5000.0;
+		float px=pxyz.x*0.5+0.5;
+		float py=pxyz.y*0.5+0.5;
+		vTextureCoord2.x=px;
+		vTextureCoord2.y=py;
+        if(px<0.02 || px>0.98 || py<0.02 || py>0.98){z=0.0;}
+		//gl_Position=xyz;
+	}
 </script>
-<script>
-var windx=600,windy=400;
-var auxvar=null,auxvar2=null,auxvar3=null;
-var http="http:";
-if(document.location.href.indexOf("https")>=0){
-http="https:";}
-//var overpass="//overpass.osm.rambler.ru/cgi/";
-var overpass="//overpass-api.de/api/";
-var url=http+overpass+"interpreter?data=[out:json];way[highway=motorway]%2850.746%2C7.154%2C50.78%2C7.27%29%3Bout%20skel%203%3B";
-//url=http+"//overpass-api.de/api/xapi?map?bbox=7.012854,51.450317,7.016477,51.452105";
-//url=http+"//overpass-api.de/api/interpreter?data=node[name=\"Gielgen\"];out;";
+
+
+
+
+
+
+<script type="text/javascript">
+
+function dbg(msg)
+{
+  console.log(msg);
+}
+var osm = new Osm();
+var lat = 48.826125291730506 ;
+var lon = 2.3570559500472212 ;
+var dist = 0.000001 ;
+//osm.getways( lat, lon, dist );
+
+var windx=600, windy=400;
+
+var dlat=0.005,dlon=0.008;
+
+var lat=48.826125291730506;
+var lng=2.3570559500472212;
+
+var lat1=lat-dlat/2,lon1=lng-dlon/2;
+var lat2=lat+dlat/2,lon2=lng+dlon/2;
 
 var wayjson,nodejson,ways,waynodes,nodes,waytype;
 var latnodes=[],lonnodes=[];
-var dlat=0.005,dlon=0.008;
-var lat=48.765,lng=2.20;
-lat=48.826125291730506;lng=2.3570559500472212;
-var lat1=lat-dlat/2,lon1=lng-dlon/2;
-var lat2=lat+dlat/2,lon2=lng+dlon/2;
-var wayurl=http+overpass+"interpreter?data=[out:json];way[highway=motorway]%28"+lat1+"%2C"+lon1+"%2C"+lat2+"%2C"+lon2+"%29%3Bout%20skel%20999%3B";
-var nodeurl=http+overpass+"interpreter?data=[out:json];%28node%28371597318%29;node%28371597317%29%29%3Bout%20skel%209%3B";
-wayurl=http+overpass+"interpreter?data=[out:json];way%28"+lat1+"%2C"+lon1+"%2C"+lat2+"%2C"+lon2+"%29%3Bout%20skel%20999%3B";
-wayurl=http+overpass+"interpreter?data=[out:json];way%28"+lat1+"%2C"+lon1+"%2C"+lat2+"%2C"+lon2+"%29%3Bout%2099%3B";
-//wayurl=http+overpass+"interpreter?data=[out:json];way[highway~'motorway|trunk|primary']%28"+lat1+"%2C"+lon1+"%2C"+lat2+"%2C"+lon2+"%29%3Bout%20skel%20999%3B";
-//wayurl=http+overpass+"interpreter?data=[out:json];way[highway~'motorway|trunk']%28"+lat1+"%2C"+lon1+"%2C"+lat2+"%2C"+lon2+"%29%3Bout%20skel%20999%3B";
-//wayurl=http+overpass+"interpreter?data=[out:json];way[highway=motorway]%28"+lat1+"%2C"+lon1+"%2C"+lat2+"%2C"+lon2+"%29%3Bout%20skel%20999%3B";
-nodeurl=http+overpass+"interpreter?data=[out:json];node%28"+lat1+"%2C"+lon1+"%2C"+lat2+"%2C"+lon2+"%29%3Bout%20skel%209999%3B";
-var nodekey,nodekey2,nodekey3,nkeymax=450;
-//nodeurl=http+overpass+"interpreter?data=[out:json];%28"+nodekey+"%29%28"+lat1+"%2C"+lon1+"%2C"+lat2+"%2C"+lon2+"%29%3Bout%20skel%209999%3B";
-function waycallback(r){//alert(r);
-wayjson=JSON.parse(r);
-var msg="",ntest=0;
-nnode=0;
-ways=null;
-ways=wayjson.elements;
-msg+="len="+ways.length;
-for(var i=0;i<ways.length;i++){
-var way=(ways[i]);
-/*msg+="/ "+way.type+" id="+way.id+" "
-waytype="none";
-if(way.tags){if(way.tags.highway){
-waytype=way.tags.highway;}}
-msg+=waytype;*/
-for(var j=0;j<way.nodes.length;j++){
-//if(i<2){msg+="/"+way.nodes[j];};
-nnode+=1;
-}
-}
-//alert("nnode="+nnode+" "+msg);
-setTimeout("getnodes();",20);
-}
-function nodecallback(r){//alert(r);
-nodejson=JSON.parse(r);
-var msg="";
-nodes=null;
-nodes=nodejson.elements;
-msg+="len="+nodes.length;
-if(resetnode==1){latnodes=[];lonnodes=[];}
-for(var i=0;i<nodes.length;i++){
-if(i<5){
-msg+="/ nodeid="+nodes[i].id;
-msg+=" lat="+nodes[i].lat;
-msg+=" lon="+nodes[i].lon;
-}
-var inode=nodes[i].id;
-latnodes[inode]=nodes[i].lat;
-lonnodes[inode]=nodes[i].lon;
-}
-//alert(msg);
 
-tdraw=1;//draw();
-}
-var loading=0,tdraw=0,klon=1;
+var nodekey,nodekey2,nodekey3,nkeymax=450;
+var auxvar=null,auxvar2=null,auxvar3=null;
+
+
+var tdraw=0,klon=1;
 var canvas = document.getElementById('canvas');
 var context = canvas.getContext('2d');
 var gl,contextgl;
@@ -294,13 +266,15 @@ var canvasgl = document.getElementById('canvasgl');
 //var contextgl = canvasgl.getContext('2d');
 canvasgl.width=windx;
 canvasgl.height=windy;
+
 function initwebgl(){
-initGL(canvasgl);
-initShaders();
-initTexture();
-initBuffers();
-setTimeout("tick(0);",500);
+  initGL(canvasgl);
+  initShaders();
+  initTexture();
+  initBuffers();
+  setTimeout("tick(0);",500);
 }
+
 //contextgl.strokeStyle = '#ffff00';
 //contextgl.lineWidth = 50;
 //line(0,0,300,300);
@@ -309,69 +283,71 @@ context.height=windy;
 context.lineWidth = 3;
 context.fillStyle = '#ff0000';
 context.font = "12pt Arial";
+
 function line(x,y,x1,y1){
-contextgl.beginPath();
-contextgl.moveTo(x,y);
-contextgl.lineTo(x1,y1);
-contextgl.stroke();
+  contextgl.beginPath();
+  contextgl.moveTo(x,y);
+  contextgl.lineTo(x1,y1);
+  contextgl.stroke();
 }
+
 function draw(){
-context.clearRect (0,0,windx,windy);
-context.font = "12pt Arial";
-for(var i=0;i<ways.length;i++){
-var way=(ways[i]),test=1;
-waytype="none";
-if(way.tags){if(way.tags.highway){
-waytype=way.tags.highway;}}
-if(way.tags){if(way.tags.building){
-waytype="building";}}
-//if(waytype=="none" || waytype=="path"){
-//  test=0;}
-if(waytype=="building"){
-context.lineWidth = 1;
-context.strokeStyle = '#008fff';
-}else if(waytype=="motorway"){
-context.lineWidth = 4;
-context.strokeStyle = '#ff0000';
-}else if(waytype=="trunk"){
-context.lineWidth = 3;
-context.strokeStyle = '#cf0000';
-}else if(waytype=="track"){
-context.lineWidth = 3;
-context.strokeStyle = '#9f8000';
-}else if(waytype=="primary"){
-context.lineWidth = 2;
-context.strokeStyle = '#4f9f00';
-}else if(waytype=="secondary"){
-context.lineWidth = 1;
-context.strokeStyle = '#00ff00';
-}else if(waytype=="tertiary"){
-context.lineWidth = 1;
-context.strokeStyle = '#008f00';
-}else{//test=0;
-context.lineWidth = 1;
-context.strokeStyle = '#000000';
-}
-if(test==1){
-context.beginPath();
-for(var j=0;j<way.nodes.length;j++){
-var inode=way.nodes[j];
-if(latnodes[inode]){
-var y=windy-windy*(latnodes[inode]-lat1)/(lat2-lat1);
-var x=windx*(lonnodes[inode]-lon1)/(lon2-lon1);
-if(j==0){context.moveTo(x,y);}
-else{context.lineTo(x,y);}
-}
-}
-context.stroke();
-if(waytype=="building"){
-context.fillStyle = '#dfefff';
-context.fill();}
-}}
-context.fillStyle = '#ff0000';
-context.fillText("lat="+lat1+" lon="+lon1,20,20);
-context.fillText("nways="+i+" nnodes="+nnode,20,40);
-//alert("drawways="+i);
+  context.clearRect (0,0,windx,windy);
+  context.font = "12pt Arial";
+  for(var i=0;i<ways.length;i++){
+  var way=(ways[i]),test=1;
+  waytype="none";
+  if(way.tags){if(way.tags.highway){
+  waytype=way.tags.highway;}}
+  if(way.tags){if(way.tags.building){
+  waytype="building";}}
+  //if(waytype=="none" || waytype=="path"){
+  //  test=0;}
+  if(waytype=="building"){
+  context.lineWidth = 1;
+  context.strokeStyle = '#008fff';
+  }else if(waytype=="motorway"){
+  context.lineWidth = 4;
+  context.strokeStyle = '#ff0000';
+  }else if(waytype=="trunk"){
+  context.lineWidth = 3;
+  context.strokeStyle = '#cf0000';
+  }else if(waytype=="track"){
+  context.lineWidth = 3;
+  context.strokeStyle = '#9f8000';
+  }else if(waytype=="primary"){
+  context.lineWidth = 2;
+  context.strokeStyle = '#4f9f00';
+  }else if(waytype=="secondary"){
+  context.lineWidth = 1;
+  context.strokeStyle = '#00ff00';
+  }else if(waytype=="tertiary"){
+  context.lineWidth = 1;
+  context.strokeStyle = '#008f00';
+  }else{//test=0;
+  context.lineWidth = 1;
+  context.strokeStyle = '#000000';
+  }
+  if(test==1){
+  context.beginPath();
+  for(var j=0;j<way.nodes.length;j++){
+  var inode=way.nodes[j];
+  if(latnodes[inode]){
+  var y=windy-windy*(latnodes[inode]-lat1)/(lat2-lat1);
+  var x=windx*(lonnodes[inode]-lon1)/(lon2-lon1);
+  if(j==0){context.moveTo(x,y);}
+  else{context.lineTo(x,y);}
+  }
+  }
+  context.stroke();
+  if(waytype=="building"){
+  context.fillStyle = '#dfefff';
+  context.fill();}
+  }}
+  context.fillStyle = '#ff0000';
+  context.fillText("lat="+lat1+" lon="+lon1,20,20);
+  context.fillText("nways="+i+" nnodes="+nnode,20,40);
+  //alert("drawways="+i);
 }
 function timer(){
 return Date.now();
@@ -407,69 +383,81 @@ var quit=0,tmsg=0,lat0=lat,lng0=lng,latx=lat,lngx=lng;
 var scale=0.3*windy/dlat,x0=x,y0=y,tmove=0;
 function close(){quit=1;}
 var tmap=0,dxmax=20;//12;
+
 function testkeys(){
-var test=0,v=0.0000002*dtime;
-if(keys[vk_up]){latx+=v*sin1;lngx+=v*cos1*klon;test=1;}
-if(keys[vk_down]){latx-=v*sin1;lngx-=v*cos1*klon;test=1;}
-if(keys[vk_left]){o1+=dtime*0.04;}
-if(keys[vk_right]){o1-=dtime*0.04;}
-if(keys[vk_page_up]){o2+=dtime*0.04;}
-if(keys[vk_page_down]){o2-=dtime*0.04;}
-if(keys[vk_3]){keys[vk_3]=0;sizescreen();}
-if(keys[vk_h]){keys[vk_h]=0;subhelp();}
-if(keys[vk_g] && keys[vk_shift]){keys[vk_g]=0;geolocate();}
-if(keys[vk_m]){tmap+=1;
-if(tmap>3){tmap=0;
-canvas.height = parseInt(canvasgl.height/3);
-context.clearRect(0,0,windx,windy);}
-else{canvas.height = parseInt(canvasgl.height);}
-resetkeys();}
-if(keys[vk_t] && keys[vk_shift]) {thour+=3.5;if(thour>24){thour-=24;};
-hour=new Date().getHours()+thour;
-while(hour>24){hour-=24;}
-while(hour<0){hour+=24;}
-updatesun();tmove=1;
-alert("timehour = "+hour);resetkeys();}
-x=((lngx-lng0)/klon)*scale;
-y=(latx-lat0)*scale;
-if(tmove==0){tmove=test;}
-if(test==1 && loading==0){
-test=0;
-if(Math.max(Math.abs(x-x0),Math.abs(y-y0))>dxmax){test=1;}
-}else{test=0;}
-if(test==1 && loading==0){test=0;loading=2;
-//resetkeys();
-osm.getways( lat, lon, dist );
-}
-if(tframe>tmsg+200){
-tmsg=tframe;
-var msg="arrow keys => move  /";
-msg+=" x="+parseInt(x*10)/10;
-msg+=" y="+parseInt(y*10)/10;
-msg+=" o1="+parseInt(o1*10)/10;
-msg+=" fps="+parseInt(fps*10)/10;
-if(auxvar!=null){msg+=" aux="+auxvar;}
-if(auxvar2!=null){msg+=" aux2="+auxvar2;}
-if(auxvar3!=null){msg+=" aux3="+auxvar3;}
-document.getElementById('msg').value=msg;
+  var test=0,v=0.0000002*dtime;
+  if(keys[vk_up]){latx+=v*sin1;lngx+=v*cos1*klon;test=1;}
+  if(keys[vk_down]){latx-=v*sin1;lngx-=v*cos1*klon;test=1;}
+  if(keys[vk_left]){o1+=dtime*0.04;}
+  if(keys[vk_right]){o1-=dtime*0.04;}
+  if(keys[vk_page_up]){o2+=dtime*0.04;}
+  if(keys[vk_page_down]){o2-=dtime*0.04;}
+  if(keys[vk_3]){keys[vk_3]=0;sizescreen();}
+  if(keys[vk_h]){keys[vk_h]=0;subhelp();}
+  if(keys[vk_g] && keys[vk_shift]){keys[vk_g]=0;geolocate();}
+  if(keys[vk_m]){tmap+=1;
+  if(tmap>3){tmap=0;
+  canvas.height = parseInt(canvasgl.height/3);
+  context.clearRect(0,0,windx,windy);}
+  else{canvas.height = parseInt(canvasgl.height);}
+  resetkeys();}
+  if(keys[vk_t] && keys[vk_shift]) {thour+=3.5;if(thour>24){thour-=24;};
+  hour=new Date().getHours()+thour;
+  while(hour>24){hour-=24;}
+  while(hour<0){hour+=24;}
+  updatesun();tmove=1;
+  alert("timehour = "+hour);resetkeys();}
+  x=((lngx-lng0)/klon)*scale;
+  y=(latx-lat0)*scale;
+  if(tmove==0){tmove=test;}
+  if(test==1 && !osm.loading){
+    test=0;
+    if(Math.max(Math.abs(x-x0),Math.abs(y-y0))>dxmax){
+      test=1;
+    }
+  } else {
+    test=0;
+  }
+
+  if( test==1 && osm.loading ) {
+    test=0;
+    //loading=2;
+    osm.loading = false ;
+    //resetkeys();
+    osm.getways( lat, lon, dist );
+  }
+  
+  if(tframe>tmsg+200){
+  tmsg=tframe;
+  var msg="arrow keys => move  /";
+  msg+=" x="+parseInt(x*10)/10;
+  msg+=" y="+parseInt(y*10)/10;
+  msg+=" o1="+parseInt(o1*10)/10;
+  msg+=" fps="+parseInt(fps*10)/10;
+  if(auxvar!=null){msg+=" aux="+auxvar;}
+  if(auxvar2!=null){msg+=" aux2="+auxvar2;}
+  if(auxvar3!=null){msg+=" aux3="+auxvar3;}
+  document.getElementById('msg').value=msg;
+  }
+
+  if(o2>85){o2=84;o1=180+o1-o3;o3=180;};
+  if(o2<-85){o2=-84;o1=180+o1+o3;o3=0;};
+  while(o1>180){o1-=360;}
+  while(o1<-180){o1+=360;}
+  while(o3>180){o3-=360;}
+  while(o3<-180){o3+=360;}
+  cos1=Math.cos(degtorad(o1));sin1=Math.sin(degtorad(o1));
+  cos2=Math.cos(degtorad(o2));sin2=Math.sin(degtorad(o2));
+  cos3=Math.cos(degtorad(o3));sin3=Math.sin(degtorad(o3));
 }
 
-if(o2>85){o2=84;o1=180+o1-o3;o3=180;};
-if(o2<-85){o2=-84;o1=180+o1+o3;o3=0;};
-while(o1>180){o1-=360;}
-while(o1<-180){o1+=360;}
-while(o3>180){o3-=360;}
-while(o3<-180){o3+=360;}
-cos1=Math.cos(degtorad(o1));sin1=Math.sin(degtorad(o1));
-cos2=Math.cos(degtorad(o2));sin2=Math.sin(degtorad(o2));
-cos3=Math.cos(degtorad(o3));sin3=Math.sin(degtorad(o3));
-}
 var x=0,y=0,z=0,o1=0,o2=-10,o3=0,vrun=1.10;
 var cos1=0,sin1=0,cos2=0,sin2=0,cos3=0,sin3=0,do1=0,do2=0,do3=0;
 var xmin=-30000,xmax=30000,ymin=-30000,ymax=30000;
 
 var tframe=0,tframe0=0,tfps=30,fps=10,dtime=1,tmsg=0,clearr,clearg,clearb,tskip=0;
 var ttimeout=0,testloop=0,tskip2=0,tsrtm=0,itime=0;
+
 function tick(tt) {
 //requestAnimFrame(tick);
 itime+=1;if(itime>10000){itime=0;}
@@ -549,36 +537,7 @@ document.getElementById('msg').focus();
 latx=lat;lngx=lng;tmap=0;
 osm.getways( lat, lng, dist );
 }
-var xmlhttp;
-function httpGet(url,callback)
-{
-xmlhttp = new XMLHttpRequest();
-if ("withCredentials" in xmlhttp) {
-// Check if the XMLHttpRequest object has a "withCredentials" property.
-// "withCredentials" only exists on XMLHTTPRequest2 objects.
-//alert("withCredentials");
-xmlhttp.open("GET", url, true);
-} else if (typeof XDomainRequest != "undefined") {
-// Otherwise, check if XDomainRequest.
-// XDomainRequest only exists in IE, and is IE's way of making CORS requests.
-xmlhttp = new XDomainRequest();
-//alert("XDomainRequest");
-xmlhttp.open("GET", url);
-} else {
-// Otherwise, CORS is not supported by the browser.
-xmlhttp = null;
-alert("cors crossdomain not supported by browser");
-return;
-}
-xmlhttp.onreadystatechange=function()
-{
-if (xmlhttp.readyState==4 && xmlhttp.status==200)
-{callback(xmlhttp.responseText);
-}
-}
-//xmlhttp.open("GET", theUrl, false);
-xmlhttp.send();
-}
+
 function degtorad(degrees) {
 return degrees * Math.PI / 180;
 }
@@ -1384,162 +1343,165 @@ roofVertexTextureCoordBuffer.itemSize = 2;
 roofVertexTextureCoordBuffer.numItems = maxvertice;//24;
 
 }
+
 function drawgl(){
-context.clearRect (0,0,windx,windy);
-indexroad=0;
-itextroad=0;
-indextower=0;
-itexttower=0;
-indexhouse=0;
-itexthouse=0;
-indexroof=0;
-itextroof=0;
-if(Math.max(Math.abs(latx-lat0),Math.abs(lngx-lng0))>0.01){
-lat0=latx;lng0=lngx;}
-for(var i=0;i<ways.length;i++){
-var way=(ways[i]),test=1;
-var xx=0,xxx=0,yy=0,yyy=0,r=1,dr=1;
-var dx=1,dy=1,dxx=0,dyy=0,dx0=0,dy0=0,zz=0,zzz=0;
-var s=0,t=0,tt=0;
-waytype="none";
-if(way.tags){if(way.tags.highway){
-waytype=way.tags.highway;}}
-if(way.tags){if(way.tags.building){
-waytype="building";}}
-//if(waytype=="none" || waytype=="path"){
-//  test=0;}
-if(waytype=="building"){
-addtower(way);
-test=0;
-//context.lineWidth = 1;
-//context.strokeStyle = '#008fff';
-}else if(waytype=="motorway"){
-r=4;
-//context.lineWidth = 4;
-//context.strokeStyle = '#ff0000';
-}else if(waytype=="trunk"){
-r=3;
-//context.lineWidth = 3;
-//context.strokeStyle = '#cf0000';
-}else if(waytype=="primary"){
-r=2.5;
-//context.lineWidth = 2;
-//context.strokeStyle = '#4f9f00';
-}else if(waytype=="secondary"){
-r=2;
-//context.lineWidth = 1;
-//context.strokeStyle = '#00ff00';
-}else if(waytype=="tertiary"){
-r=1.2;
-//context.lineWidth = 1;
-//context.strokeStyle = '#008f00';
-}else{//test=0;
-r=0.8;
-//context.lineWidth = 1;
-//context.strokeStyle = '#000000';
+  context.clearRect (0,0,windx,windy);
+  indexroad=0;
+  itextroad=0;
+  indextower=0;
+  itexttower=0;
+  indexhouse=0;
+  itexthouse=0;
+  indexroof=0;
+  itextroof=0;
+  if(Math.max(Math.abs(latx-lat0),Math.abs(lngx-lng0))>0.01){
+  lat0=latx;lng0=lngx;}
+  for(var i=0;i<ways.length;i++){
+  var way=(ways[i]),test=1;
+  var xx=0,xxx=0,yy=0,yyy=0,r=1,dr=1;
+  var dx=1,dy=1,dxx=0,dyy=0,dx0=0,dy0=0,zz=0,zzz=0;
+  var s=0,t=0,tt=0;
+  waytype="none";
+  if(way.tags){if(way.tags.highway){
+  waytype=way.tags.highway;}}
+  if(way.tags){if(way.tags.building){
+  waytype="building";}}
+  //if(waytype=="none" || waytype=="path"){
+  //  test=0;}
+  if(waytype=="building"){
+  addtower(way);
+  test=0;
+  //context.lineWidth = 1;
+  //context.strokeStyle = '#008fff';
+  }else if(waytype=="motorway"){
+  r=4;
+  //context.lineWidth = 4;
+  //context.strokeStyle = '#ff0000';
+  }else if(waytype=="trunk"){
+  r=3;
+  //context.lineWidth = 3;
+  //context.strokeStyle = '#cf0000';
+  }else if(waytype=="primary"){
+  r=2.5;
+  //context.lineWidth = 2;
+  //context.strokeStyle = '#4f9f00';
+  }else if(waytype=="secondary"){
+  r=2;
+  //context.lineWidth = 1;
+  //context.strokeStyle = '#00ff00';
+  }else if(waytype=="tertiary"){
+  r=1.2;
+  //context.lineWidth = 1;
+  //context.strokeStyle = '#008f00';
+  }else{//test=0;
+  r=0.8;
+  //context.lineWidth = 1;
+  //context.strokeStyle = '#000000';
+  }
+  if(test==1){
+  //context.beginPath();
+  var jmax=way.nodes.length-1;
+  var jstart=0;
+  for(var j=0;j<=jmax;j++){
+  var inode=way.nodes[j];
+  if(latnodes[inode]){
+  xxx=xx;yyy=yy;zzz=zz;
+  yy=(latnodes[inode]-lat0)*scale*2;
+  xx=((lonnodes[inode]-lng0)/klon)*scale*2;
+  zz=0;
+  dx0=dx;dy0=dy;
+  if(jstart==0){jstart=1;//context.moveTo(xx,yy);
+  }else{//context.lineTo(xx,yy);
+  dxx=xx-xxx;dyy=yy-yyy;
+  dr=Math.max(0.00001,Math.sqrt(dxx*dxx+dyy*dyy));
+  dx=-r*dyy/dr;dy=r*dxx/dr;
+  if(j==1){dx0=dx;dy0=dy;
+  xxx-=dy*0.4;yyy+=dx*0.4;}
+  if(j==jmax){xx+=dy*0.4;yy-=dx*0.4;}
+  index=indexroad;
+  append(roadvertices,[
+  xxx-dx0,yyy-dy0,zzz,
+  xx+dx,yy+dy,zz,
+  xxx+dx0,yyy+dy0,zzz,
+  xxx-dx0,yyy-dy0,zzz,
+  xx-dx,yy-dy,zz,
+  xx+dx,yy+dy,zz
+  ]);
+  indexroad=index;
+  s=1;tt=t;t+=dr*0.3;
+  index=itextroad;
+  append(roadtextureCoords,[
+  0,tt,
+  1,t,
+  1,tt,
+  0,tt,
+  0,t,
+  1,t
+  ]);
+  itextroad=index;
+  }
+  }
+  }
+  //context.stroke();
+  }}
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, roadVertexPositionBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, (roadvertices), gl.STATIC_DRAW);
+  roadVertexPositionBuffer.itemSize = 3;
+  roadVertexPositionBuffer.numItems = indexroad/3;
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, roadVertexTextureCoordBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, (roadtextureCoords), gl.STATIC_DRAW);
+  roadVertexTextureCoordBuffer.itemSize = 2;
+  roadVertexTextureCoordBuffer.numItems = itextroad/2;
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, towerVertexPositionBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, (towervertices), gl.STATIC_DRAW);
+  towerVertexPositionBuffer.itemSize = 3;
+  towerVertexPositionBuffer.numItems = indextower/3;
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, towerVertexTextureCoordBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, (towertextureCoords), gl.STATIC_DRAW);
+  towerVertexTextureCoordBuffer.itemSize = 2;
+  towerVertexTextureCoordBuffer.numItems = itexttower/2;
+
+  settowernormals();
+  /*gl.bindBuffer(gl.ARRAY_BUFFER, houseVertexPositionBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, (housevertices), gl.STATIC_DRAW);
+  houseVertexPositionBuffer.itemSize = 3;
+  houseVertexPositionBuffer.numItems = indexhouse/3;
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, houseVertexTextureCoordBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, (housetextureCoords), gl.STATIC_DRAW);
+  houseVertexTextureCoordBuffer.itemSize = 2;
+  houseVertexTextureCoordBuffer.numItems = itexthouse/2;
+  */
+  gl.bindBuffer(gl.ARRAY_BUFFER, roofVertexPositionBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, (roofvertices), gl.STATIC_DRAW);
+  roofVertexPositionBuffer.itemSize = 3;
+  roofVertexPositionBuffer.numItems = indexroof/3;
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, roofVertexTextureCoordBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, (rooftextureCoords), gl.STATIC_DRAW);
+  roofVertexTextureCoordBuffer.itemSize = 2;
+  roofVertexTextureCoordBuffer.numItems = itextroof/2;
+
+  //lat0=lat;lng0=lng;
+  x0=x;y0=y;
+
+  context.font = "12pt Arial";
+  context.fillStyle = '#ff0000';
+  var latt=parseInt(lat*10000)/10000;
+  var lngg=parseInt(lng*10000)/10000;
+  context.fillText("lat="+latt+" lon="+lngg,20,20);
+  context.fillText("nways="+i+" nnodes="+nnode,20,40);
+  context.fillText("H => help",20,60);
+  //alert("drawways="+i);
+  //loading=0;
+  osm.loading = false ;
+  tmove=1;
 }
-if(test==1){
-//context.beginPath();
-var jmax=way.nodes.length-1;
-var jstart=0;
-for(var j=0;j<=jmax;j++){
-var inode=way.nodes[j];
-if(latnodes[inode]){
-xxx=xx;yyy=yy;zzz=zz;
-yy=(latnodes[inode]-lat0)*scale*2;
-xx=((lonnodes[inode]-lng0)/klon)*scale*2;
-zz=0;
-dx0=dx;dy0=dy;
-if(jstart==0){jstart=1;//context.moveTo(xx,yy);
-}else{//context.lineTo(xx,yy);
-dxx=xx-xxx;dyy=yy-yyy;
-dr=Math.max(0.00001,Math.sqrt(dxx*dxx+dyy*dyy));
-dx=-r*dyy/dr;dy=r*dxx/dr;
-if(j==1){dx0=dx;dy0=dy;
-xxx-=dy*0.4;yyy+=dx*0.4;}
-if(j==jmax){xx+=dy*0.4;yy-=dx*0.4;}
-index=indexroad;
-append(roadvertices,[
-xxx-dx0,yyy-dy0,zzz,
-xx+dx,yy+dy,zz,
-xxx+dx0,yyy+dy0,zzz,
-xxx-dx0,yyy-dy0,zzz,
-xx-dx,yy-dy,zz,
-xx+dx,yy+dy,zz
-]);
-indexroad=index;
-s=1;tt=t;t+=dr*0.3;
-index=itextroad;
-append(roadtextureCoords,[
-0,tt,
-1,t,
-1,tt,
-0,tt,
-0,t,
-1,t
-]);
-itextroad=index;
-}
-}
-}
-//context.stroke();
-}}
 
-gl.bindBuffer(gl.ARRAY_BUFFER, roadVertexPositionBuffer);
-gl.bufferData(gl.ARRAY_BUFFER, (roadvertices), gl.STATIC_DRAW);
-roadVertexPositionBuffer.itemSize = 3;
-roadVertexPositionBuffer.numItems = indexroad/3;
-
-gl.bindBuffer(gl.ARRAY_BUFFER, roadVertexTextureCoordBuffer);
-gl.bufferData(gl.ARRAY_BUFFER, (roadtextureCoords), gl.STATIC_DRAW);
-roadVertexTextureCoordBuffer.itemSize = 2;
-roadVertexTextureCoordBuffer.numItems = itextroad/2;
-
-gl.bindBuffer(gl.ARRAY_BUFFER, towerVertexPositionBuffer);
-gl.bufferData(gl.ARRAY_BUFFER, (towervertices), gl.STATIC_DRAW);
-towerVertexPositionBuffer.itemSize = 3;
-towerVertexPositionBuffer.numItems = indextower/3;
-
-gl.bindBuffer(gl.ARRAY_BUFFER, towerVertexTextureCoordBuffer);
-gl.bufferData(gl.ARRAY_BUFFER, (towertextureCoords), gl.STATIC_DRAW);
-towerVertexTextureCoordBuffer.itemSize = 2;
-towerVertexTextureCoordBuffer.numItems = itexttower/2;
-
-settowernormals();
-/*gl.bindBuffer(gl.ARRAY_BUFFER, houseVertexPositionBuffer);
-gl.bufferData(gl.ARRAY_BUFFER, (housevertices), gl.STATIC_DRAW);
-houseVertexPositionBuffer.itemSize = 3;
-houseVertexPositionBuffer.numItems = indexhouse/3;
-
-gl.bindBuffer(gl.ARRAY_BUFFER, houseVertexTextureCoordBuffer);
-gl.bufferData(gl.ARRAY_BUFFER, (housetextureCoords), gl.STATIC_DRAW);
-houseVertexTextureCoordBuffer.itemSize = 2;
-houseVertexTextureCoordBuffer.numItems = itexthouse/2;
-*/
-gl.bindBuffer(gl.ARRAY_BUFFER, roofVertexPositionBuffer);
-gl.bufferData(gl.ARRAY_BUFFER, (roofvertices), gl.STATIC_DRAW);
-roofVertexPositionBuffer.itemSize = 3;
-roofVertexPositionBuffer.numItems = indexroof/3;
-
-gl.bindBuffer(gl.ARRAY_BUFFER, roofVertexTextureCoordBuffer);
-gl.bufferData(gl.ARRAY_BUFFER, (rooftextureCoords), gl.STATIC_DRAW);
-roofVertexTextureCoordBuffer.itemSize = 2;
-roofVertexTextureCoordBuffer.numItems = itextroof/2;
-
-//lat0=lat;lng0=lng;
-x0=x;y0=y;
-
-context.font = "12pt Arial";
-context.fillStyle = '#ff0000';
-var latt=parseInt(lat*10000)/10000;
-var lngg=parseInt(lng*10000)/10000;
-context.fillText("lat="+latt+" lon="+lngg,20,20);
-context.fillText("nways="+i+" nnodes="+nnode,20,40);
-context.fillText("H => help",20,60);
-//alert("drawways="+i);
-loading=0;
-tmove=1;
-}
 function addtower(way){
 var xx=0,xxx=0,yy=0,yyy=0,r=1,dr=1;
 var dxx=0,dyy=0,zz=0,zzz=0;

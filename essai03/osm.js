@@ -18,9 +18,11 @@ var Osm = function()
     http="https:";
   }
 
-var wayjson,nodejson,ways,waynodes,nodes,waytype;
-var latnodes=[],lonnodes=[];
-var nodekey,nodekey2,nodekey3,nkeymax=450;
+  this.loading = false ;
+
+  //var wayjson,nodejson,ways,waynodes,nodes,waytype;
+  //var latnodes=[],lonnodes=[];
+  //var nodekey,nodekey2,nodekey3,nkeymax=450;
 
   this.getnodes = function ()
   {
@@ -44,7 +46,11 @@ var nodekey,nodekey2,nodekey3,nkeymax=450;
 	  this.tgetnode=1;
 	  try{
 	    httpGet( this.nodeurl,this.nodecallback );
-	  }catch (e){alert("error getnodes");loading=0;
+	  }
+	  catch (e)
+	  {
+  	  alert("error getnodes");
+  	  this.loading = false ;
 	  }
   }
 
@@ -70,6 +76,8 @@ var nodekey,nodekey2,nodekey3,nkeymax=450;
     //alert(msg);
 
     tdraw=1;//draw();
+
+    //this.loading = false ;
   }
 
   this.getways = function( lat, lon, dist )
@@ -98,7 +106,7 @@ var nodekey,nodekey2,nodekey3,nkeymax=450;
 		  httpGet(wayurl,this.waycallback);
 	  }catch(e){
 		  alert("error getways - "+e.toString() );
-		  loading=0;
+		  this.loading = false ;
 	  }
   }
 
@@ -125,6 +133,8 @@ var nodekey,nodekey2,nodekey3,nkeymax=450;
      }
     //alert("nnode="+nnode+" "+msg);
     //setTimeout("getnodes();",20);
+    var _this = this;
+    setTimeout( _this.getnodes ,20);
   }
 
 };
