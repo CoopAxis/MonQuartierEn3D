@@ -30,14 +30,14 @@ function httpGet(url,callback)
 
   xmlhttp.onreadystatechange = function()
   {
-    console.log("onreadystatechange()");
+    //console.log("onreadystatechange() "+xmlhttp.readyState+" "+xmlhttp.status);
     if(xmlhttp.readyState==4 && xmlhttp.status==200)
     {
       callback(xmlhttp.responseText);
     }
     else
     {
-      console.log("onreadystatechange() Abort, no callback called");
+      //console.log("onreadystatechange() Abort, no callback called");
     }
   }
 
