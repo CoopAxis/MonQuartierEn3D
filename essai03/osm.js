@@ -6,13 +6,15 @@
 var Osm = function()
 {
 
+  //this.overpass='//overpass-api.de/api/';
+  this.overpass='//api.openstreetmap.fr/oapi/';
+
   this.lat = 48.826125291730506 ;
   this.lng = 2.3570559500472212 ;
   
   this.dlat = 0.002;
   this.dlon = 0.004;
 
-  this.overpass='//overpass-api.de/api/';
   this.http="http:";
   if( document.location.href.indexOf("https")>=0 ) {
     http="https:";
