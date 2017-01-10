@@ -20,9 +20,11 @@ var Osm = function()
     http="https:";
   }
 
+  // true while loading data,
+  // false after error or ways and nodes loaded.
   this.loading = false ;
-
-  //var wayjson,nodejson,ways,waynodes,nodes,waytype;
+  this.ways = null ;
+  //var ,,ways,waynodes,nodes,waytype;
   //var latnodes=[],lonnodes=[];
   //var nodekey,nodekey2,nodekey3,nkeymax=450;
 
@@ -59,10 +61,11 @@ var Osm = function()
 
   this.nodecallback = function( that, r )
   {
-    nodejson=JSON.parse(r);
+    var nodejson=JSON.parse(r);
+    var nodes=nodejson.elements;
+
     var msg="";
-    nodes=null;
-    nodes=nodejson.elements;
+
     msg+="len="+nodes.length;
     // resetnode
     latnodes=[];lonnodes=[];
@@ -79,7 +82,7 @@ var Osm = function()
     }
     tdraw=1;//draw();
 
-    //this.loading = false ;
+    this.loading = false ;
 
   }
 
@@ -90,7 +93,7 @@ var Osm = function()
 		  dbg('getways() Abort, already loading.');
 		  return;
 	  }
-	  loading=true;
+	  this.loading=true;
 
 	  dbg('getways()');
 
@@ -120,15 +123,15 @@ var Osm = function()
     dbg('waycallback()');
 
 	  //alert(r);
-    wayjson=JSON.parse(r);
+    var wayjson=JSON.parse(r);
+    this.ways = wayjson.elements ;
     var msg="",ntest=0;
     nnode=0;
-    ways=null;
-    ways = wayjson.elements;
-    msg+="len="+ways.length;
-    for(var i=0;i<ways.length;i++)
+
+    msg+="len="+ this.ways.length;
+    for(var i=0;i<this.ways.length;i++)
     {
-      var way=(ways[i]);
+      var way=(this.ways[i]);
       /*msg+="/ "+way.type+" id="+way.id+" "
       waytype="none";
       if(way.tags){if(way.tags.highway){
