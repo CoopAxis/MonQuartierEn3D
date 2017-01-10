@@ -26,7 +26,7 @@ var Osm = function()
   //var latnodes=[],lonnodes=[];
   //var nodekey,nodekey2,nodekey3,nkeymax=450;
 
-  this.getnodes = function ()
+  this.getnodes = function (that)
   {
 	  dbg('getnodes()');
 
@@ -47,7 +47,8 @@ var Osm = function()
 	  this.resetnode=1;
 	  this.tgetnode=1;
 	  try{
-	    httpGet( this.nodeurl,this.nodecallback );
+	    //httpGet( this.nodeurl, this.nodecallback );
+	    httpGet( this.nodeurl, function( r ){ that.nodecallback(that, r) } );
 	  }
 	  catch (e)
 	  {
@@ -56,30 +57,30 @@ var Osm = function()
 	  }
   }
 
-  this.nodecallback = function (r)
+  this.nodecallback = function( that, r )
   {
-	  //alert(r);
     nodejson=JSON.parse(r);
     var msg="";
     nodes=null;
     nodes=nodejson.elements;
     msg+="len="+nodes.length;
-    if(resetnode==1){latnodes=[];lonnodes=[];}
-    for(var i=0;i<nodes.length;i++){
-       if(i<5){
-	    msg+="/ nodeid="+nodes[i].id;
-	    msg+=" lat="+nodes[i].lat;
-	    msg+=" lon="+nodes[i].lon;
-	    }
-	   var inode=nodes[i].id;
-	   latnodes[inode]=nodes[i].lat;
-       lonnodes[inode]=nodes[i].lon;
-	   }
-    //alert(msg);
+    // resetnode
+    latnodes=[];lonnodes=[];
 
+    for(var i=0;i<nodes.length;i++){
+      if(i<5){
+	      msg+="/ nodeid="+nodes[i].id;
+	      msg+=" lat="+nodes[i].lat;
+	      msg+=" lon="+nodes[i].lon;
+	    }
+	    var inode=nodes[i].id;
+	    latnodes[inode]=nodes[i].lat;
+      lonnodes[inode]=nodes[i].lon;
+    }
     tdraw=1;//draw();
 
     //this.loading = false ;
+
   }
 
   this.getways = function( lat, lon, dist_lat, dist_lon )
@@ -105,7 +106,8 @@ var Osm = function()
 	  var wayurl= this.http + this.overpass+"interpreter?data=[out:json];"+keyway+"%3Bout%204999%3B";
 
 	  try{
-		  httpGet(wayurl,this.waycallback);
+  	  var that = this ;
+		  httpGet(wayurl, function( r ){ that.waycallback(that, r) } );
 	  }
 	  catch(e){
 		  alert("error getways - "+e.toString() );
@@ -113,7 +115,7 @@ var Osm = function()
 	  }
   }
 
-  this.waycallback = function(r)
+  this.waycallback = function( that, r)
   {
     dbg('waycallback()');
 
@@ -137,7 +139,8 @@ var Osm = function()
     }
     //alert("nnode="+nnode+" "+msg);
     //setTimeout("getnodes();",20);
-    setTimeout( this.getnodes ,20);
+    //setTimeout( osm.getnodes ,20);
+	  setTimeout( function(){ that.getnodes(that) }, 20 );
   }
 
 };
