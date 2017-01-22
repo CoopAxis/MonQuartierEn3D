@@ -5,7 +5,7 @@ openstreetmap roads to html5 array -->
 <head>
 <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
 </head>
-<body bgcolor="#FFFFFF" onunload="close();" onKeyUp="keyup(event);" onKeyDown="keydown(event);" >
+<body bgcolor="#FFFFFF" onunload="close();" >
 	<div id="mydiv" style="position:absolute;top:0px;left:0px;z-index:200;" >
 		<canvas id="canvas" style="border:none;top:0px;left:0px;" width="600" height="400"></canvas>
 	</div>
@@ -48,6 +48,7 @@ openstreetmap roads to html5 array -->
 
 <script src="utils.js" type="text/javascript"></script>
 <script src="osm.js" type="text/javascript"></script>
+<script src="keys.js" type="text/javascript"></script>
 
 <script src="https://maps.googleapis.com/maps/api/js?v=3&key=AIzaSyA9hK2lEmYMel53P17Ax6H5E952OSxiHdM" type="text/javascript" ></script>
 <script src="lib/glMatrix-0.9.5.min.js"></script>
@@ -105,10 +106,13 @@ openstreetmap roads to html5 array -->
 
 var windx=600, windy=400;
 
+var keys = new Keys();
+document.body.onkeydown = keys.keydown ;
+document.body.onkeyup = keys.keyup ;
+
 var osm = new Osm();
 var lat = 47.38994 ;
 var lng = 0.69366 ;
-
 
 // Angle de la caméra (tourner avec touches flèches droite et gauche)
 var o1 = 0;
@@ -164,135 +168,153 @@ contextgl.stroke();
 }
 
 function draw(){
-context.clearRect (0,0,windx,windy);
-context.font = "12pt Arial";
-for(var i=0;i<ways.length;i++){
-   var way=(ways[i]),test=1;
-   waytype="none";
-   if(way.tags){if(way.tags.highway){
-      waytype=way.tags.highway;}}
-   if(way.tags){if(way.tags.building){
-      waytype="building";}}
-   //if(waytype=="none" || waytype=="path"){
-   //  test=0;}
-   if(waytype=="building"){
-     context.lineWidth = 1;
-     context.strokeStyle = '#008fff';
-   }else if(waytype=="motorway"){
-     context.lineWidth = 4;
-     context.strokeStyle = '#ff0000';
-   }else if(waytype=="trunk"){
-     context.lineWidth = 3;
-     context.strokeStyle = '#cf0000';
-   }else if(waytype=="track"){
-     context.lineWidth = 3;
-     context.strokeStyle = '#9f8000';
-   }else if(waytype=="primary"){
-     context.lineWidth = 2;
-     context.strokeStyle = '#4f9f00';
-   }else if(waytype=="secondary"){
-     context.lineWidth = 1;
-     context.strokeStyle = '#00ff00';
-   }else if(waytype=="tertiary"){
-     context.lineWidth = 1;
-     context.strokeStyle = '#008f00';
-   }else{//test=0;
-     context.lineWidth = 1;
-     context.strokeStyle = '#000000';
-   }
-   if(test==1){
-   context.beginPath();
-   for(var j=0;j<way.nodes.length;j++){
-     var inode=way.nodes[j];
-	 if(latnodes[inode]){
-	   var y=windy-windy*(latnodes[inode]-lat1)/(lat2-lat1);
-	   var x=windx*(lonnodes[inode]-lon1)/(lon2-lon1);
-	   if(j==0){context.moveTo(x,y);}
-	   else{context.lineTo(x,y);}
-	 }
-   }
-   context.stroke();
-   if(waytype=="building"){
-      context.fillStyle = '#dfefff';
-	  context.fill();}
-   }}
+	context.clearRect (0,0,windx,windy);
+	context.font = "12pt Arial";
+	for(var i=0;i<ways.length;i++){
+	   var way=(ways[i]),test=1;
+	   waytype="none";
+	   if(way.tags){if(way.tags.highway){
+		  waytype=way.tags.highway;}}
+	   if(way.tags){if(way.tags.building){
+		  waytype="building";}}
+	   //if(waytype=="none" || waytype=="path"){
+	   //  test=0;}
+	   if(waytype=="building"){
+		 context.lineWidth = 1;
+		 context.strokeStyle = '#008fff';
+	   }else if(waytype=="motorway"){
+		 context.lineWidth = 4;
+		 context.strokeStyle = '#ff0000';
+	   }else if(waytype=="trunk"){
+		 context.lineWidth = 3;
+		 context.strokeStyle = '#cf0000';
+	   }else if(waytype=="track"){
+		 context.lineWidth = 3;
+		 context.strokeStyle = '#9f8000';
+	   }else if(waytype=="primary"){
+		 context.lineWidth = 2;
+		 context.strokeStyle = '#4f9f00';
+	   }else if(waytype=="secondary"){
+		 context.lineWidth = 1;
+		 context.strokeStyle = '#00ff00';
+	   }else if(waytype=="tertiary"){
+		 context.lineWidth = 1;
+		 context.strokeStyle = '#008f00';
+	   }else{//test=0;
+		 context.lineWidth = 1;
+		 context.strokeStyle = '#000000';
+	   }
+		if(test==1){
+			context.beginPath();
+			for(var j=0;j<way.nodes.length;j++){
+			 var inode=way.nodes[j];
+			 if(latnodes[inode]){
+			   var y=windy-windy*(latnodes[inode]-lat1)/(lat2-lat1);
+			   var x=windx*(lonnodes[inode]-lon1)/(lon2-lon1);
+			   if(j==0){context.moveTo(x,y);}
+			   else{context.lineTo(x,y);}
+			 }
+			}
+			context.stroke();
+			if(waytype=="building"){
+				context.fillStyle = '#dfefff';
+				context.fill();
+			}
+		}
+	}// for ways
    context.fillStyle = '#ff0000';
    context.fillText("lat="+lat1+" lon="+lon1,20,20);
    context.fillText("nways="+i+" nnodes="+nnode,20,40);
    //alert("drawways="+i);
 }
+
 function timer(){
-return Date.now();
-//return (new Date()).getTime();//ms
+	return Date.now();
+	//return (new Date()).getTime();//ms
 }
-var keys=new Array(256),keys0=new Array(256),tkeys=new Array(256),tkey=0;
-var pkeys=new Array(256);
-function resetkeys(){
- for(var i=0;i<256;i++){keys[i]=0;keys0[i]=0;tkeys[i]=0;}
-}
-resetkeys();
-function keydown(e){
-var key=eval(e.which || e.keyCode)
-var t=timer();
-if(key>0 && key<256){keys[key]=1;tkeys[key]=t;keys0[key]=1;}
-}
-function keyup(e){
-var key=eval(e.which || e.keyCode)
-if(key>0 && key<256){keys[key]=0;keys0[key]=0;}
-}
+
+
 function subhelp(){
-var crlf=String.fromCharCode(13)+String.fromCharCode(10);
-var msg="H => help "+crlf;
-msg+="3 => fullscreen"+crlf;
-msg+="shift+G => flyto geolocation"+crlf;
-msg+="pageup/pagedown => look up/down"+crlf;
-alert(msg);
-document.getElementById('msg').focus();
+	var crlf=String.fromCharCode(13)+String.fromCharCode(10);
+	var msg="H => help "+crlf;
+	msg+="3 => fullscreen"+crlf;
+	msg+="shift+G => flyto geolocation"+crlf;
+	msg+="pageup/pagedown => look up/down"+crlf;
+	alert(msg);
+	document.getElementById('msg').focus();
 }
+
 var quit=0,tmsg=0,lat0=lat,lng0=lng,latx=lat,lngx=lng;
 var scale=0.3*windy/dlat,x0=x,y0=y;
-function close(){quit=1;}
-var tmap=0,dxmax=12;
-function testkeys(){
-var test=0,v=0.0000002*dtime;
-if(keys[vk_up]){latx+=v*sin1;lngx+=v*cos1*klon;test=1;}
-if(keys[vk_down]){latx-=v*sin1;lngx-=v*cos1*klon;test=1;}
-if(keys[vk_left]){o1+=dtime*0.04;}
-if(keys[vk_right]){o1-=dtime*0.04;}
-if(keys[vk_page_up]){o2+=dtime*0.04;}
-if(keys[vk_page_down]){o2-=dtime*0.04;}
-if(keys[vk_3]){keys[vk_3]=0;sizescreen();}
-if(keys[vk_h]){keys[vk_h]=0;subhelp();}
-if(keys[vk_g] && keys[vk_shift]){keys[vk_g]=0;geolocate();}
-if(keys[vk_m]){tmap+=1;
-   if(tmap>1){tmap=0;
-              canvas.height = parseInt(canvasgl.height/3);
-			  context.clearRect(0,0,windx,windy);}
-   else{canvas.height = parseInt(canvasgl.height);}
-   resetkeys();}
-x=((lngx-lng0)/klon)*scale;
-y=(latx-lat0)*scale;
-if(test==1 && !osm.loading){
- test=0;
- if(Math.max(Math.abs(x-x0),Math.abs(y-y0))>dxmax){test=1;}
-}else{test=0;}
-if(test==1 && !osm.loading){test=0;
-   //resetkeys();
-   osm.getways( lat, lng, dlat, dlon );
-   }
-if(tframe>tmsg+200){
-   tmsg=tframe;
-   var msg="arrow keys => move  /";
-   msg+=" x="+parseInt(x*10)/10;
-   msg+=" y="+parseInt(y*10)/10;
-   msg+=" o1="+parseInt(o1*10)/10;
-   msg+=" fps="+parseInt(fps*10)/10;
-   if(auxvar!=null){msg+=" aux="+auxvar;}
-   if(auxvar2!=null){msg+=" aux2="+auxvar2;}
-   if(auxvar3!=null){msg+=" aux3="+auxvar3;}
-   document.getElementById('msg').value=msg;
-   }
 
+function close(){quit=1;}
+
+var tmap=0,dxmax=12;
+
+function testkeys(){
+	var test=0,v=0.0000002*dtime;
+
+	if(keys.up()){
+		latx+=v*sin1;lngx+=v*cos1*klon;
+		test=1;
+	}
+	if(keys.down()){
+		latx-=v*sin1;lngx-=v*cos1*klon;
+		test=1;
+	}
+	if(keys.left()){
+		o1+=dtime*0.04;
+	}
+	if(keys.right()){
+		o1-=dtime*0.04;
+	}
+	if(keys.vk_page_up()){
+		o2+=dtime*0.04;
+	}
+	if(keys.vk_page_down()){
+		o2-=dtime*0.04;
+	}
+	if(keys.vk_3()){
+		sizescreen();
+	}
+	if(keys[vk_h]){
+		subhelp();
+	}
+	if(keys[vk_g] && keys[vk_shift]){
+		geolocate();
+	}
+	if(keys[vk_m]){
+		tmap+=1;
+		if(tmap>1){
+			tmap=0;
+			canvas.height = parseInt(canvasgl.height/3);
+			context.clearRect(0,0,windx,windy);
+		}
+		else{
+			canvas.height = parseInt(canvasgl.height);
+		}
+		keys.resetkeys();
+	}
+	x=((lngx-lng0)/klon)*scale;
+	y=(latx-lat0)*scale;
+	if(test==1 && !osm.loading){
+		if(Math.max(Math.abs(x-x0),Math.abs(y-y0))>dxmax){
+			osm.getways( lat, lng, dlat, dlon );
+		}
+	}
+
+	if(tframe>tmsg+200){
+	   tmsg=tframe;
+	   var msg="arrow keys => move  /";
+	   msg+=" x="+parseInt(x*10)/10;
+	   msg+=" y="+parseInt(y*10)/10;
+	   msg+=" o1="+parseInt(o1*10)/10;
+	   msg+=" fps="+parseInt(fps*10)/10;
+	   if(auxvar!=null){msg+=" aux="+auxvar;}
+	   if(auxvar2!=null){msg+=" aux2="+auxvar2;}
+	   if(auxvar3!=null){msg+=" aux3="+auxvar3;}
+	   document.getElementById('msg').value=msg;
+	}
     if(o2>85){o2=84;o1=180+o1-o3;o3=180;};
     if(o2<-85){o2=-84;o1=180+o1+o3;o3=0;};
 	while(o1>180){o1-=360;}
@@ -302,49 +324,52 @@ if(tframe>tmsg+200){
     cos1=Math.cos(degtorad(o1));sin1=Math.sin(degtorad(o1));
     cos2=Math.cos(degtorad(o2));sin2=Math.sin(degtorad(o2));
     cos3=Math.cos(degtorad(o3));sin3=Math.sin(degtorad(o3));
-}
+
+}//testkeys()
+
 var x=0,y=0,z=0,o1=0,o2=-10,o3=0,vrun=1.10;
 var cos1=0,sin1=0,cos2=0,sin2=0,cos3=0,sin3=0,do1=0,do2=0,do3=0;
 var xmin=-30000,xmax=30000,ymin=-30000,ymax=30000;
 
-    var tframe=0,tframe0=0,tfps=30,fps=10,dtime=1,tmsg=0,clearr,clearg,clearb,tskip=0;
-	var ttimeout=0,testloop=0,tskip2=0,tsrtm=0;
-	function tick(tt) {
-        //requestAnimFrame(tick);
-        if(quit==0 && testloop==0 && ttimeout==0){testloop=1;requestAnimationFrame(tick);
-        }else{testloop=0;};
-		testkeys();
-		tskip=0;
-		//if(x<xmin){x+=xmax-xmin;tskip=1;};
-		//if(x>xmax){x-=xmax-xmin;tskip=1;};
-		//if(y<ymin){y+=ymax-ymin;tskip=1;};
-		//if(y>ymax){y-=ymax-ymin;tskip=1;};
-		if(tframe<tskip2+100){tskip=1;}
-        gl.clearColor(1,1,1, 1.0);
-        if(tskip==0){drawScene();}
-	    if(tdraw==1){tdraw=0;drawgl();}
-		if(tmap==1){tmap=2;draw();
-		            setTimeout("draw();",500);}
-		if(tupdatesoltexture==1){
-		    tupdatesoltexture=0;
-			latsol0=latsol;lngsol0=lngsol;
-			handleLoadedTexture(solTexture);}
-		tframe0=tframe;
-		tframe=timer();
-		dtime=tframe-tframe0;
-		if(dtime>1000){dtime=1000;}
-		tfps+=(tframe-tframe0-tfps)*0.2;
-		if(tfps<1){tfps=1;}
-		if(tfps>1000){tfps=1000;}
-		fps=1000/tfps;
-		var dt=(tframe0+25-tframe);
-		if(dt<10){dt=10};
-		if(quit==0 && ttimeout){timeouttick=setTimeout("tick(0);",dt);
-           }else{
-		   //if(tclose==0){requestAnimationFrame(tick);};
-           if(quit==0 && testloop==0){testloop=1;requestAnimFrame(tick);
-		     }else{testloop=0;};}
-    }
+var tframe=0,tframe0=0,tfps=30,fps=10,dtime=1,tmsg=0,clearr,clearg,clearb,tskip=0;
+var ttimeout=0,testloop=0,tskip2=0,tsrtm=0;
+
+function tick(tt) {
+	//requestAnimFrame(tick);
+	if(quit==0 && testloop==0 && ttimeout==0){testloop=1;requestAnimationFrame(tick);
+	}else{testloop=0;};
+	testkeys();
+	tskip=0;
+	//if(x<xmin){x+=xmax-xmin;tskip=1;};
+	//if(x>xmax){x-=xmax-xmin;tskip=1;};
+	//if(y<ymin){y+=ymax-ymin;tskip=1;};
+	//if(y>ymax){y-=ymax-ymin;tskip=1;};
+	if(tframe<tskip2+100){tskip=1;}
+	gl.clearColor(1,1,1, 1.0);
+	if(tskip==0){drawScene();}
+	if(tdraw==1){tdraw=0;drawgl();}
+	if(tmap==1){tmap=2;draw();
+				setTimeout("draw();",500);}
+	if(tupdatesoltexture==1){
+		tupdatesoltexture=0;
+		latsol0=latsol;lngsol0=lngsol;
+		handleLoadedTexture(solTexture);}
+	tframe0=tframe;
+	tframe=timer();
+	dtime=tframe-tframe0;
+	if(dtime>1000){dtime=1000;}
+	tfps+=(tframe-tframe0-tfps)*0.2;
+	if(tfps<1){tfps=1;}
+	if(tfps>1000){tfps=1000;}
+	fps=1000/tfps;
+	var dt=(tframe0+25-tframe);
+	if(dt<10){dt=10};
+	if(quit==0 && ttimeout){timeouttick=setTimeout("tick(0);",dt);
+	   }else{
+	   //if(tclose==0){requestAnimationFrame(tick);};
+	   if(quit==0 && testloop==0){testloop=1;requestAnimFrame(tick);
+		 }else{testloop=0;};}
+}// tick()
 
 document.getElementById('msg').focus();
 document.getElementById('msg').value="arrow keys => move";
@@ -355,39 +380,39 @@ var flytoname="Sanitas Tours";
 
 function subcombo()
 {
-icombo=document.getElementById('combo').selectedIndex;
-combotext = document.getElementById('combo')[icombo].id ;
-var o1=0;
-lat=flytolat;lng=flytolng;
-if (combotext=="Sanitas Tours"){lat=47.3798   ;lng=0.6992   ;o1=120;}
-if (combotext=="deauville marinas"){lat=49.36198047661674   ;lng=0.07262960190958628   ;o1=120;}
-if (combotext=="deauville plage"){lat=49.35600551121942   ;lng=0.06075459446313726   ;o1=110;}
-if (combotext=="trouville plage"){lat=49.36663106706898   ;lng=0.07818353983048315   ;o1=130;}
-if (combotext=="nancy"){lat=48.69306979368741   ;lng=6.182922715725031   ;o1=70;}
-if (combotext=="crickvenica"){lat=45.1734569955986   ;lng=14.689314428610118   ;o1=-110;}
-if (combotext=="paris tolbiac"){lat=48.826125291730506   ;lng=2.3570559500472212   ;o1=0;}
-if (combotext=="paris defense"){lat=48.891977155490395   ;lng=2.237673523003608   ;o1=160;}
-if (combotext=="ivry romain roland"){lat=48.80346335679542   ;lng=2.3934673532940915   ;o1=-50;}
-if (combotext=="orsay"){lat=48.706787   ;lng=2.180894999999964   ;o1=-30;}
-if (combotext=="le barcares"){lat=42.78764305091493   ;lng=3.0338932951133533   ;o1=175;}
-if (combotext=="jerusalem"){lat=31.776636707589287   ;lng=35.2337121963501   ;o1=36.3920;}
-if (combotext=="marseille"){lat=43.2803905;lng=5.405139   ;o1=36.3920;}
-if (combotext=="nice"){lat=43.7031905;lng=7.252817  ;o1=36.3920;}
-if (combotext=="arcachon"){lat=44.6514284;lng=-1.171656  ;o1=36.3920;}
-if (combotext=="grenoble"){lat=45.1841656;lng=5.7155425 ;o1=36.3920;}
-if (combotext=="san francisco"){lat=37.7577;lng=-122.4376 ;o1=36.3920;}
-if (combotext=="new york"){lat=40.7033121;lng=-73.97968 ;o1=36.3920;}
-if (combotext=="atlanta"){lat=33.7677129;lng=-84.42060 ;o1=36.3920;}
-if (combotext=="rio"){lat=-22.8650853;lng=-43.13109 ;o1=36.3920;}
-if (combotext=="hong kong"){lat=22.3700556;lng=114.153758 ;o1=36.3920;}
-if (combotext=="athenes"){lat=37.9908372;lng=23.7383394 ;o1=36.3920;}
-if (combotext=="perth"){lat=-31.9546529;lng=115.852662 ;o1=36.3920;}
-if (combotext=="le caire"){lat=30.04441959;lng=31.23571160;o1=36.3920;}
-if (combotext=="washington"){lat=38.8850399;lng=-77.08054296;o1=36.3920;}
-if (combotext=="tajmahal"){lat=27.17015;lng=78.002155;o1=36.3920;}
-document.getElementById('msg').focus();
-latx=lat;lngx=lng;tmap=0;
-osm.getways( lat, lng, dlat, dlon );
+	icombo=document.getElementById('combo').selectedIndex;
+	combotext = document.getElementById('combo')[icombo].id ;
+	var o1=0;
+	lat=flytolat;lng=flytolng;
+	if (combotext=="Sanitas Tours"){lat=47.3798   ;lng=0.6992   ;o1=120;}
+	if (combotext=="deauville marinas"){lat=49.36198047661674   ;lng=0.07262960190958628   ;o1=120;}
+	if (combotext=="deauville plage"){lat=49.35600551121942   ;lng=0.06075459446313726   ;o1=110;}
+	if (combotext=="trouville plage"){lat=49.36663106706898   ;lng=0.07818353983048315   ;o1=130;}
+	if (combotext=="nancy"){lat=48.69306979368741   ;lng=6.182922715725031   ;o1=70;}
+	if (combotext=="crickvenica"){lat=45.1734569955986   ;lng=14.689314428610118   ;o1=-110;}
+	if (combotext=="paris tolbiac"){lat=48.826125291730506   ;lng=2.3570559500472212   ;o1=0;}
+	if (combotext=="paris defense"){lat=48.891977155490395   ;lng=2.237673523003608   ;o1=160;}
+	if (combotext=="ivry romain roland"){lat=48.80346335679542   ;lng=2.3934673532940915   ;o1=-50;}
+	if (combotext=="orsay"){lat=48.706787   ;lng=2.180894999999964   ;o1=-30;}
+	if (combotext=="le barcares"){lat=42.78764305091493   ;lng=3.0338932951133533   ;o1=175;}
+	if (combotext=="jerusalem"){lat=31.776636707589287   ;lng=35.2337121963501   ;o1=36.3920;}
+	if (combotext=="marseille"){lat=43.2803905;lng=5.405139   ;o1=36.3920;}
+	if (combotext=="nice"){lat=43.7031905;lng=7.252817  ;o1=36.3920;}
+	if (combotext=="arcachon"){lat=44.6514284;lng=-1.171656  ;o1=36.3920;}
+	if (combotext=="grenoble"){lat=45.1841656;lng=5.7155425 ;o1=36.3920;}
+	if (combotext=="san francisco"){lat=37.7577;lng=-122.4376 ;o1=36.3920;}
+	if (combotext=="new york"){lat=40.7033121;lng=-73.97968 ;o1=36.3920;}
+	if (combotext=="atlanta"){lat=33.7677129;lng=-84.42060 ;o1=36.3920;}
+	if (combotext=="rio"){lat=-22.8650853;lng=-43.13109 ;o1=36.3920;}
+	if (combotext=="hong kong"){lat=22.3700556;lng=114.153758 ;o1=36.3920;}
+	if (combotext=="athenes"){lat=37.9908372;lng=23.7383394 ;o1=36.3920;}
+	if (combotext=="perth"){lat=-31.9546529;lng=115.852662 ;o1=36.3920;}
+	if (combotext=="le caire"){lat=30.04441959;lng=31.23571160;o1=36.3920;}
+	if (combotext=="washington"){lat=38.8850399;lng=-77.08054296;o1=36.3920;}
+	if (combotext=="tajmahal"){lat=27.17015;lng=78.002155;o1=36.3920;}
+	document.getElementById('msg').focus();
+	latx=lat;lngx=lng;tmap=0;
+	osm.getways( lat, lng, dlat, dlon );
 }
 
 function degtorad(degrees) {

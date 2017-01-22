@@ -17,7 +17,7 @@ var Osm = function()
 
   this.http="http:";
   if( document.location.href.indexOf("https")>=0 ) {
-    http="https:";
+    this.http="https:";
   }
 
   // true while loading data,
