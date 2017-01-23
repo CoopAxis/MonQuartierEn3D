@@ -11,37 +11,9 @@ openstreetmap roads to html5 array -->
 	</div>
 	<div id="mydiv2" style="position:absolute;top:0px;left:0px;z-index:100;" >
 		<canvas id="canvasgl" style="border:red 1px solid;top:0px;left:0px;" width="600" height="400"></canvas>
+
 		<br />
 		<button id="fullscreen"  onclick="sizescreen();">fullscreen</button>
-		<select id="combo" onChange="subcombo();" onblur="tfocus=1;waitkey=0;" onfocus="tfocus=0;waitkey=0;">
-			<option id="initial">initial</option>
-			<option id="Sanitas Tours">Sanitas Tours</option>
-			<option id="deauville marinas">deauville marinas</option>
-			<option id="deauville plage">deauville plage</option>
-			<option id="trouville plage">trouville plage</option>
-			<option id="nancy">nancy</option>
-			<option id="crickvenica">crickvenica</option>
-			<option id="paris tolbiac">paris tolbiac</option>
-			<option id="paris defense">paris defense</option>
-			<option id="ivry romain roland">ivry romain roland</option>
-			<option id="orsay">orsay</option>
-			<option id="le barcares">le barcares</option>
-			<option id="jerusalem">jerusalem</option>
-			<option id="marseille">marseille</option>
-			<option id="nice">nice</option>
-			<option id="arcachon">arcachon</option>
-			<option id="grenoble">grenoble</option>
-			<option id="san francisco">san francisco</option>
-			<option id="new york">new york</option>
-			<option id="atlanta">atlanta</option>
-			<option id="rio">rio</option>
-			<option id="hong kong">hong kong</option>
-			<option id="athenes">athenes</option>
-			<option id="perth">perth</option>
-			<option id="le caire">le caire</option>
-			<option id="washington">washington</option>
-			<option id="tajmahal">tajmahal</option>
-		</select>
 		<input type="button" value="reload" onclick="subcombo()" />
 		<input type="text"  readonly="readonly" id="msg" maxlength="65" size="65" />
 	</div>
@@ -114,26 +86,33 @@ var osm = new Osm();
 var lat = 47.38994 ;
 var lng = 0.69366 ;
 
-// Angle de la caméra (tourner avec touches flèches droite et gauche)
+// Angle de la cam&ra (tourner avec touches fl�ches droite et gauche)
 var o1 = 0;
 
 // Distance de lat et lon pour rectangle de donnes OSM
 var dlat=0.0010,dlon=0.0014;
-// Les coordonnées du rectangle de données OSM
-var lat1=lat-dlat/2,
-  lon1=lng-dlon/2;
-var lat2=lat+dlat/2,
-  lon2=lng+dlon/2;
+//var dlat=0.0040,dlon=0.0030;
 
+// Les coordonnées du rectangle de donn�es OSM
+var	lat1 = lat-dlat/2,
+	lon1 = lng-dlon/2;
+var	lat2 = lat+dlat/2,
+	lon2 = lng+dlon/2;
 
-var ways,waynodes,nodes,waytype;
+var nodes;
 var nodekey,nodekey2,nodekey3,nkeymax=450;
-var latnodes=[],lonnodes=[];
 
-var auxvar=null,auxvar2=null,auxvar3=null;
+var quit=0,tmsg=0,lat0=lat,lng0=lng,latx=lat,lngx=lng;
+var scale = 0.3*windy/dlat,x0=x,y0=y;
+var tmap=0,dxmax=12;
 
 var tdraw=0,klon=1;
-var tgetnode=1;
+
+var x=0,y=0,z=0,o1=0,o2=-10,o3=0,vrun=1.10;
+var cos1=0,sin1=0,cos2=0,sin2=0,cos3=0,sin3=0,do1=0,do2=0,do3=0;
+var xmin=-30000,xmax=30000,ymin=-30000,ymax=30000;
+
+var auxvar=null,auxvar2=null,auxvar3=null;
 
 var canvas = document.getElementById('canvas');
 var context = canvas.getContext('2d');
@@ -142,14 +121,6 @@ var canvasgl = document.getElementById('canvasgl');
 //var contextgl = canvasgl.getContext('2d');
 canvasgl.width=windx;
 canvasgl.height=windy;
-
-function initwebgl(){
- initGL(canvasgl);
- initShaders();
- initTexture();
- initBuffers();
- setTimeout("tick(0);",500);
-}
 
 //contextgl.strokeStyle = '#ffff00';
 //contextgl.lineWidth = 50;
@@ -160,60 +131,75 @@ context.lineWidth = 3;
 context.fillStyle = '#ff0000';
 context.font = "12pt Arial";
 
+
 function line(x,y,x1,y1){
-contextgl.beginPath();
-contextgl.moveTo(x,y);
-contextgl.lineTo(x1,y1);
-contextgl.stroke();
+	contextgl.beginPath();
+	contextgl.moveTo(x,y);
+	contextgl.lineTo(x1,y1);
+	contextgl.stroke();
 }
 
-function draw(){
+function draw()
+{
 	context.clearRect (0,0,windx,windy);
 	context.font = "12pt Arial";
-	for(var i=0;i<ways.length;i++){
-	   var way=(ways[i]),test=1;
-	   waytype="none";
-	   if(way.tags){if(way.tags.highway){
-		  waytype=way.tags.highway;}}
-	   if(way.tags){if(way.tags.building){
-		  waytype="building";}}
-	   //if(waytype=="none" || waytype=="path"){
-	   //  test=0;}
-	   if(waytype=="building"){
-		 context.lineWidth = 1;
-		 context.strokeStyle = '#008fff';
-	   }else if(waytype=="motorway"){
-		 context.lineWidth = 4;
-		 context.strokeStyle = '#ff0000';
-	   }else if(waytype=="trunk"){
-		 context.lineWidth = 3;
-		 context.strokeStyle = '#cf0000';
-	   }else if(waytype=="track"){
-		 context.lineWidth = 3;
-		 context.strokeStyle = '#9f8000';
-	   }else if(waytype=="primary"){
-		 context.lineWidth = 2;
-		 context.strokeStyle = '#4f9f00';
-	   }else if(waytype=="secondary"){
-		 context.lineWidth = 1;
-		 context.strokeStyle = '#00ff00';
-	   }else if(waytype=="tertiary"){
-		 context.lineWidth = 1;
-		 context.strokeStyle = '#008f00';
-	   }else{//test=0;
-		 context.lineWidth = 1;
-		 context.strokeStyle = '#000000';
-	   }
+
+	dbg("draw() ways:"+osm.ways.length);
+	for(var i=0;i<osm.ways.length;i++)
+	{
+		var way=(osm.ways[i]),
+			test=1;
+		var waytype="none";
+
+		if(way.tags){
+			if(way.tags.highway){
+				waytype = way.tags.highway;
+			}
+			if(way.tags.building){
+				waytype="building";
+			}
+		}
+
+		//if(waytype=="none" || waytype=="path"){
+		//  test=0;}
+
+		if(waytype=="building"){
+			context.lineWidth = 1;
+			context.strokeStyle = '#008fff';
+		}else if(waytype=="motorway"){
+			context.lineWidth = 4;
+			context.strokeStyle = '#ff0000';
+		}else if(waytype=="trunk"){
+			context.lineWidth = 3;
+			context.strokeStyle = '#cf0000';
+		}else if(waytype=="track"){
+			context.lineWidth = 3;
+			context.strokeStyle = '#9f8000';
+		}else if(waytype=="primary"){
+			context.lineWidth = 2;
+			context.strokeStyle = '#4f9f00';
+		}else if(waytype=="secondary"){
+			context.lineWidth = 1;
+			context.strokeStyle = '#00ff00';
+		}else if(waytype=="tertiary"){
+			context.lineWidth = 1;
+			context.strokeStyle = '#008f00';
+		}else{//test=0;
+			context.lineWidth = 1;
+			context.strokeStyle = '#000000';
+		}
+
 		if(test==1){
 			context.beginPath();
 			for(var j=0;j<way.nodes.length;j++){
-			 var inode=way.nodes[j];
-			 if(latnodes[inode]){
-			   var y=windy-windy*(latnodes[inode]-lat1)/(lat2-lat1);
-			   var x=windx*(lonnodes[inode]-lon1)/(lon2-lon1);
-			   if(j==0){context.moveTo(x,y);}
-			   else{context.lineTo(x,y);}
-			 }
+				var iNode=way.nodes[j];
+				var nodes = osm.nodes ;
+				if( nodes[iNode] ){
+					var y=windy-windy*(nodes[iNode].lat-lat1)/(lat2-lat1);
+					var x=windx*(nodes[iNode].lon-lon1)/(lon2-lon1);
+					if(j==0){context.moveTo(x,y);}
+					else{context.lineTo(x,y);}
+				}
 			}
 			context.stroke();
 			if(waytype=="building"){
@@ -244,22 +230,22 @@ function subhelp(){
 	document.getElementById('msg').focus();
 }
 
-var quit=0,tmsg=0,lat0=lat,lng0=lng,latx=lat,lngx=lng;
-var scale=0.3*windy/dlat,x0=x,y0=y;
-
 function close(){quit=1;}
 
-var tmap=0,dxmax=12;
 
-function testkeys(){
-	var test=0,v=0.0000002*dtime;
+function testkeys()
+{
+	var test=0,
+		v=0.0000002*dtime;
 
 	if(keys.up()){
-		latx+=v*sin1;lngx+=v*cos1*klon;
+		latx+=v*sin1;
+		lngx+=v*cos1*klon;
 		test=1;
 	}
 	if(keys.down()){
-		latx-=v*sin1;lngx-=v*cos1*klon;
+		latx -= v*sin1;
+		lngx -= v*cos1*klon;
 		test=1;
 	}
 	if(keys.left()){
@@ -284,6 +270,7 @@ function testkeys(){
 		geolocate();
 	}
 	if(keys[vk_m]){
+		dbg('testkeys() vk_m');
 		tmap+=1;
 		if(tmap>1){
 			tmap=0;
@@ -321,39 +308,49 @@ function testkeys(){
 	while(o1<-180){o1+=360;}
 	while(o3>180){o3-=360;}
 	while(o3<-180){o3+=360;}
-    cos1=Math.cos(degtorad(o1));sin1=Math.sin(degtorad(o1));
-    cos2=Math.cos(degtorad(o2));sin2=Math.sin(degtorad(o2));
-    cos3=Math.cos(degtorad(o3));sin3=Math.sin(degtorad(o3));
+    cos1=Math.cos(degtorad(o1)); sin1=Math.sin(degtorad(o1));
+    cos2=Math.cos(degtorad(o2)); sin2=Math.sin(degtorad(o2));
+    cos3=Math.cos(degtorad(o3)); sin3=Math.sin(degtorad(o3));
 
 }//testkeys()
-
-var x=0,y=0,z=0,o1=0,o2=-10,o3=0,vrun=1.10;
-var cos1=0,sin1=0,cos2=0,sin2=0,cos3=0,sin3=0,do1=0,do2=0,do3=0;
-var xmin=-30000,xmax=30000,ymin=-30000,ymax=30000;
 
 var tframe=0,tframe0=0,tfps=30,fps=10,dtime=1,tmsg=0,clearr,clearg,clearb,tskip=0;
 var ttimeout=0,testloop=0,tskip2=0,tsrtm=0;
 
-function tick(tt) {
+function tick(tt)
+{
 	//requestAnimFrame(tick);
-	if(quit==0 && testloop==0 && ttimeout==0){testloop=1;requestAnimationFrame(tick);
-	}else{testloop=0;};
+	if(quit==0 && testloop==0 && ttimeout==0){
+		testloop=1;requestAnimationFrame(tick);
+	}else{
+		testloop=0;
+	}
 	testkeys();
 	tskip=0;
 	//if(x<xmin){x+=xmax-xmin;tskip=1;};
 	//if(x>xmax){x-=xmax-xmin;tskip=1;};
 	//if(y<ymin){y+=ymax-ymin;tskip=1;};
 	//if(y>ymax){y-=ymax-ymin;tskip=1;};
-	if(tframe<tskip2+100){tskip=1;}
+	if(tframe < tskip2+100){
+		tskip=1;
+	}
 	gl.clearColor(1,1,1, 1.0);
-	if(tskip==0){drawScene();}
-	if(tdraw==1){tdraw=0;drawgl();}
-	if(tmap==1){tmap=2;draw();
-				setTimeout("draw();",500);}
+	if(tskip==0){
+		drawScene();
+	}
+	if(tdraw==1){
+		tdraw=0;
+		drawgl();
+	}
+	if(tmap==1){
+		tmap=2;draw();
+		setTimeout("draw();",500);
+	}
 	if(tupdatesoltexture==1){
 		tupdatesoltexture=0;
 		latsol0=latsol;lngsol0=lngsol;
-		handleLoadedTexture(solTexture);}
+		handleLoadedTexture(solTexture);
+	}
 	tframe0=tframe;
 	tframe=timer();
 	dtime=tframe-tframe0;
@@ -364,60 +361,30 @@ function tick(tt) {
 	fps=1000/tfps;
 	var dt=(tframe0+25-tframe);
 	if(dt<10){dt=10};
-	if(quit==0 && ttimeout){timeouttick=setTimeout("tick(0);",dt);
-	   }else{
-	   //if(tclose==0){requestAnimationFrame(tick);};
-	   if(quit==0 && testloop==0){testloop=1;requestAnimFrame(tick);
-		 }else{testloop=0;};}
+	if(quit==0 && ttimeout){
+		timeouttick=setTimeout("tick(0);",dt);
+	}else{
+		//if(tclose==0){requestAnimationFrame(tick);};
+		if(quit==0 && testloop==0){testloop=1;requestAnimFrame(tick);
+		}else{testloop=0;};
+	}
+
 }// tick()
 
 document.getElementById('msg').focus();
 document.getElementById('msg').value="arrow keys => move";
 
 var icombo=0,combotext="";
-var flytolat=48.82612529173,flytolng=2.3570559500472;
-var flytoname="Sanitas Tours";
 
-function subcombo()
+function initwebgl()
 {
-	icombo=document.getElementById('combo').selectedIndex;
-	combotext = document.getElementById('combo')[icombo].id ;
-	var o1=0;
-	lat=flytolat;lng=flytolng;
-	if (combotext=="Sanitas Tours"){lat=47.3798   ;lng=0.6992   ;o1=120;}
-	if (combotext=="deauville marinas"){lat=49.36198047661674   ;lng=0.07262960190958628   ;o1=120;}
-	if (combotext=="deauville plage"){lat=49.35600551121942   ;lng=0.06075459446313726   ;o1=110;}
-	if (combotext=="trouville plage"){lat=49.36663106706898   ;lng=0.07818353983048315   ;o1=130;}
-	if (combotext=="nancy"){lat=48.69306979368741   ;lng=6.182922715725031   ;o1=70;}
-	if (combotext=="crickvenica"){lat=45.1734569955986   ;lng=14.689314428610118   ;o1=-110;}
-	if (combotext=="paris tolbiac"){lat=48.826125291730506   ;lng=2.3570559500472212   ;o1=0;}
-	if (combotext=="paris defense"){lat=48.891977155490395   ;lng=2.237673523003608   ;o1=160;}
-	if (combotext=="ivry romain roland"){lat=48.80346335679542   ;lng=2.3934673532940915   ;o1=-50;}
-	if (combotext=="orsay"){lat=48.706787   ;lng=2.180894999999964   ;o1=-30;}
-	if (combotext=="le barcares"){lat=42.78764305091493   ;lng=3.0338932951133533   ;o1=175;}
-	if (combotext=="jerusalem"){lat=31.776636707589287   ;lng=35.2337121963501   ;o1=36.3920;}
-	if (combotext=="marseille"){lat=43.2803905;lng=5.405139   ;o1=36.3920;}
-	if (combotext=="nice"){lat=43.7031905;lng=7.252817  ;o1=36.3920;}
-	if (combotext=="arcachon"){lat=44.6514284;lng=-1.171656  ;o1=36.3920;}
-	if (combotext=="grenoble"){lat=45.1841656;lng=5.7155425 ;o1=36.3920;}
-	if (combotext=="san francisco"){lat=37.7577;lng=-122.4376 ;o1=36.3920;}
-	if (combotext=="new york"){lat=40.7033121;lng=-73.97968 ;o1=36.3920;}
-	if (combotext=="atlanta"){lat=33.7677129;lng=-84.42060 ;o1=36.3920;}
-	if (combotext=="rio"){lat=-22.8650853;lng=-43.13109 ;o1=36.3920;}
-	if (combotext=="hong kong"){lat=22.3700556;lng=114.153758 ;o1=36.3920;}
-	if (combotext=="athenes"){lat=37.9908372;lng=23.7383394 ;o1=36.3920;}
-	if (combotext=="perth"){lat=-31.9546529;lng=115.852662 ;o1=36.3920;}
-	if (combotext=="le caire"){lat=30.04441959;lng=31.23571160;o1=36.3920;}
-	if (combotext=="washington"){lat=38.8850399;lng=-77.08054296;o1=36.3920;}
-	if (combotext=="tajmahal"){lat=27.17015;lng=78.002155;o1=36.3920;}
-	document.getElementById('msg').focus();
-	latx=lat;lngx=lng;tmap=0;
-	osm.getways( lat, lng, dlat, dlon );
+	initGL(canvasgl);
+	initShaders();
+	initTexture();
+	initBuffers();
+	setTimeout("tick(0);",500);
 }
 
-function degtorad(degrees) {
-    return degrees * Math.PI / 180;
-}
 function initGL(canvasgl){
        try {
            gl = canvasgl.getContext("experimental-webgl");
@@ -429,83 +396,86 @@ function initGL(canvasgl){
            alert("Could not initialise WebGL, sorry :-(");
        }
 }
-    function getShader(gl, id) {
-        var shaderScript = document.getElementById(id);
-        if (!shaderScript) {
-            return null;
-        }
 
-        var str = "";
-        var k = shaderScript.firstChild;
-        while (k) {
-            if (k.nodeType == 3) {
-                str += k.textContent;
-            }
-            k = k.nextSibling;
-        }
+function getShader(gl, id) {
+	var shaderScript = document.getElementById(id);
+	if (!shaderScript) {
+		return null;
+	}
 
-        var shader;
-        if (shaderScript.type == "x-shader/x-fragment") {
-            shader = gl.createShader(gl.FRAGMENT_SHADER);
-        } else if (shaderScript.type == "x-shader/x-vertex") {
-            shader = gl.createShader(gl.VERTEX_SHADER);
-        } else {
-            return null;
-        }
+	var str = "";
+	var k = shaderScript.firstChild;
+	while (k) {
+		if (k.nodeType == 3) {
+			str += k.textContent;
+		}
+		k = k.nextSibling;
+	}
 
-        gl.shaderSource(shader, str);
-        gl.compileShader(shader);
+	var shader;
+	if (shaderScript.type == "x-shader/x-fragment") {
+		shader = gl.createShader(gl.FRAGMENT_SHADER);
+	} else if (shaderScript.type == "x-shader/x-vertex") {
+		shader = gl.createShader(gl.VERTEX_SHADER);
+	} else {
+		return null;
+	}
 
-        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-            alert(gl.getShaderInfoLog(shader));
-            return null;
-        }
+	gl.shaderSource(shader, str);
+	gl.compileShader(shader);
 
-        return shader;
-    }
+	if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+		alert(gl.getShaderInfoLog(shader));
+		return null;
+	}
+
+	return shader;
+}
 
 
-    var shaderProgram;
+var shaderProgram;
 
-    function initShaders() {
-        var fragmentShader = getShader(gl, "shader-fs");
-        var vertexShader = getShader(gl, "shader-vs");
+function initShaders() {
+	var fragmentShader = getShader(gl, "shader-fs");
+	var vertexShader = getShader(gl, "shader-vs");
 
-        shaderProgram = gl.createProgram();
-        gl.attachShader(shaderProgram, vertexShader);
-        gl.attachShader(shaderProgram, fragmentShader);
-        gl.linkProgram(shaderProgram);
+	shaderProgram = gl.createProgram();
+	gl.attachShader(shaderProgram, vertexShader);
+	gl.attachShader(shaderProgram, fragmentShader);
+	gl.linkProgram(shaderProgram);
 
-        if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-            alert("Could not initialise shaders");
-        }
+	if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+		alert("Could not initialise shaders");
+	}
 
-        gl.useProgram(shaderProgram);
+	gl.useProgram(shaderProgram);
 
-        shaderProgram.vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexPosition");
-        gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
+	shaderProgram.vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexPosition");
+	gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
 
-        shaderProgram.textureCoordAttribute = gl.getAttribLocation(shaderProgram, "aTextureCoord");
-        gl.enableVertexAttribArray(shaderProgram.textureCoordAttribute);
+	shaderProgram.textureCoordAttribute = gl.getAttribLocation(shaderProgram, "aTextureCoord");
+	gl.enableVertexAttribArray(shaderProgram.textureCoordAttribute);
 
-        shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
-        shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
-        shaderProgram.samplerUniform = gl.getUniformLocation(shaderProgram, "uSampler");
-        shaderProgram.colorUniform = gl.getUniformLocation(shaderProgram, "ucolor");
-    }
+	shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
+	shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+	shaderProgram.samplerUniform = gl.getUniformLocation(shaderProgram, "uSampler");
+	shaderProgram.colorUniform = gl.getUniformLocation(shaderProgram, "ucolor");
+}
+
     var texturelist=[],itexturelist=0;
-	function handleLoadedTexture00(texture) {
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas2);
-        //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-        gl.bindTexture(gl.TEXTURE_2D, null);
-        texture.width=canvas2.width;
-		texture.height=canvas2.height;
-    }
+
+function handleLoadedTexture00(texture) {
+	gl.bindTexture(gl.TEXTURE_2D, texture);
+	gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas2);
+	//gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+	//gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+	gl.bindTexture(gl.TEXTURE_2D, null);
+	texture.width=canvas2.width;
+	texture.height=canvas2.height;
+}
 	function handleLoadedTexture0(texture) {
         gl.bindTexture(gl.TEXTURE_2D, texture);
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
@@ -739,6 +709,7 @@ function drawroofs(){
     gl.drawArrays(gl.TRIANGLES, 0, roofVertexPositionBuffer.numItems);
 	mvPopMatrix();
 }
+
 function drawbouss(){
   var xx=windx-40,yy=40,r=14;
   context.clearRect (xx-40,yy-40,xx+40,yy+40);
@@ -749,12 +720,16 @@ function drawbouss(){
   context.fillText("E",xx+r*sin1,yy-r*cos1);
   context.fillText("W",xx-r*sin1,yy+r*cos1);
 }
+
 var xsol=0,ysol=0,zsol=-0.1;
-function drawsol(){
-//xsol=parseInt(x/100)*100;
-//ysol=parseInt(y/100)*100;
-xsol=((lngsol0-lng0)/klon)*scale;
-ysol=(latsol0-lat0)*scale;
+
+function drawsol()
+{
+
+	//xsol=parseInt(x/100)*100;
+	//ysol=parseInt(y/100)*100;
+	xsol=((lngsol0-lng0)/klon)*scale;
+	ysol=(latsol0-lat0)*scale;
 
 
 	mvPushMatrix();
@@ -954,382 +929,400 @@ ysol=(latsol0-lat0)*scale;
 
 		}
 
-function drawgl(){
+function drawgl()
+{
+	context.clearRect (0,0,windx,windy);
+	indexroad=0;
+	itextroad=0;
+	indextower=0;
+	itexttower=0;
+	indexhouse=0;
+	itexthouse=0;
+	indexroof=0;
+	itextroof=0;
 
-  context.clearRect (0,0,windx,windy);
-  indexroad=0;
-  itextroad=0;
-  indextower=0;
-  itexttower=0;
-  indexhouse=0;
-  itexthouse=0;
-  indexroof=0;
-  itextroof=0;
-  if(Math.max(Math.abs(latx-lat0),Math.abs(lngx-lng0))>0.01)
-  {
-    lat0=latx;
-    lng0=lngx;
-  }
+	if(Math.max(Math.abs(latx-lat0),Math.abs(lngx-lng0))>0.01)
+	{
+		lat0=latx;
+		lng0=lngx;
+	}
 
-  for(var i=0;i<osm.ways.length;i++)
-  {
-    var way=(osm.ways[i]),test=1;
-    var xx=0,xxx=0,yy=0,yyy=0,r=1,dr=1;
-    var dx=1,dy=1,dxx=0,dyy=0,dx0=0,dy0=0,zz=0,zzz=0;
-    var s=0,t=0,tt=0;
-    waytype="none";
-    if(way.tags){
-      if(way.tags.highway){
-        waytype=way.tags.highway;
-      }
-    }
-    if(way.tags){
-      if(way.tags.building){
-        waytype="building";
-      }
-    }
+	dbg('drawgl()');
+	for(var i=0;i<osm.ways.length;i++)
+	{
+		var way=(osm.ways[i]),
+			test=1;
+		var xx=0,xxx=0,yy=0,yyy=0,r=1,dr=1;
+		var dx=1,dy=1,dxx=0,dyy=0,dx0=0,dy0=0,zz=0,zzz=0;
+		var s=0,t=0,tt=0;
+		var waytype="none";
 
-    //if(waytype=="none" || waytype=="path"){
-    //  test=0;}
-    if(waytype=="building"){
-      addtower(way);
-      test=0;
-      //context.lineWidth = 1;
-      //context.strokeStyle = '#008fff';
-    }else if(waytype=="motorway"){
-      r=4;
-      //context.lineWidth = 4;
-      //context.strokeStyle = '#ff0000';
-    }else if(waytype=="trunk"){
-      r=3;
-      //context.lineWidth = 3;
-      //context.strokeStyle = '#cf0000';
-    }else if(waytype=="primary"){
-      r=2.5;
-      //context.lineWidth = 2;
-      //context.strokeStyle = '#4f9f00';
-    }else if(waytype=="secondary"){
-      r=2;
-      //context.lineWidth = 1;
-      //context.strokeStyle = '#00ff00';
-    }else if(waytype=="tertiary"){
-      r=1.2;
-      //context.lineWidth = 1;
-      //context.strokeStyle = '#008f00';
-    }else{//test=0;
-      r=0.8;
-  	  //context.lineWidth = 1;
-      //context.strokeStyle = '#000000';
-    }
+		if(way.tags)
+		{
+		  if(way.tags.highway){
+			waytype=way.tags.highway;
+		  }
+		  if(way.tags.building){
+			waytype="building";
+		  }
+		}
+
+		//if(waytype=="none" || waytype=="path"){
+		//  test=0;}
+		if(waytype=="building"){
+			addtower(way);
+			test=0;
+			//context.lineWidth = 1;
+			//context.strokeStyle = '#008fff';
+		}else if(waytype=="motorway"){
+			r=4;
+			//context.lineWidth = 4;
+			//context.strokeStyle = '#ff0000';
+		}else if(waytype=="trunk"){
+			r=3;
+			//context.lineWidth = 3;
+			//context.strokeStyle = '#cf0000';
+		}else if(waytype=="primary"){
+			r=2.5;
+			//context.lineWidth = 2;
+			//context.strokeStyle = '#4f9f00';
+		}else if(waytype=="secondary"){
+			r=2;
+			//context.lineWidth = 1;
+			//context.strokeStyle = '#00ff00';
+		}else if(waytype=="tertiary"){
+			r=1.2;
+			//context.lineWidth = 1;
+			//context.strokeStyle = '#008f00';
+		}else{//test=0;
+			r=0.8;
+			//context.lineWidth = 1;
+			//context.strokeStyle = '#000000';
+		}
     
-    if(test==1){
-      //context.beginPath();
-      var jmax=way.nodes.length-1;
-      var jstart=0;
-      for(var j=0;j<=jmax;j++){
-        var inode=way.nodes[j];
-        if(latnodes[inode]){
-          xxx=xx;yyy=yy;zzz=zz;
-          yy=(latnodes[inode]-lat0)*scale*2;
-          xx=((lonnodes[inode]-lng0)/klon)*scale*2;
-          zz=0;
-          dx0=dx;dy0=dy;
-          if(jstart==0){
-            jstart=1;//context.moveTo(xx,yy);
-          }else{//context.lineTo(xx,yy);
-            dxx=xx-xxx;dyy=yy-yyy;
-		        dr=Math.max(0.00001,Math.sqrt(dxx*dxx+dyy*dyy));
-		        dx=-r*dyy/dr;dy=r*dxx/dr;
-		        if(j==1){
-		          dx0=dx;dy0=dy;
-		          xxx-=dy*0.4;yyy+=dx*0.4;
-		        }
-		        if(j==jmax){
-		          xx+=dy*0.4;yy-=dx*0.4;
-		        }
-		        index=indexroad;
-	          append(
-	            roadvertices,[
-                xxx-dx0,yyy-dy0,zzz,
-		            xx+dx,yy+dy,zz,
-		            xxx+dx0,yyy+dy0,zzz,
-      			    xxx-dx0,yyy-dy0,zzz,
-		            xx-dx,yy-dy,zz,
-		            xx+dx,yy+dy,zz
-              ]);
-		        indexroad=index;
-		        s=1;tt=t;t+=dr*0.3;
-		        index=itextroad;
-	          append(
-	            roadtextureCoords,[
-                0,tt,
-                1,t,
-                1,tt,
-                0,tt,
-                0,t,
-                1,t
-              ]);
-		        itextroad=index;
-          }
-        }
-      } // for j<= jmax
-      //context.stroke();
-    }
-  }
+		if(test==1)
+		{
+			dbg('drawgl() ...');
+			//context.beginPath();
+			var jmax=way.nodes.length-1;
+			var jstart=0;
+			for(var j=0;j<=jmax;j++)
+			{
+				var idNode=way.nodes[j];
+				if(osm.nodes[idNode])
+				{
+					node = osm.nodes[idNode];
+					xxx=xx;yyy=yy;zzz=zz;
+					yy=(node.lat-lat0)*scale*2;
+					xx=((node.lon-lng0)/klon)*scale*2;
+					zz=0;
+					dx0=dx;dy0=dy;
+					if(jstart==0){
+						jstart=1;//context.moveTo(xx,yy);
+					} else {//context.lineTo(xx,yy);
+						dxx=xx-xxx;dyy=yy-yyy;
+						dr=Math.max(0.00001,Math.sqrt(dxx*dxx+dyy*dyy));
+						dx=-r*dyy/dr;dy=r*dxx/dr;
+						if(j==1){
+							dx0=dx;dy0=dy;
+							xxx-=dy*0.4;yyy+=dx*0.4;
+						}
+						if(j==jmax){
+							xx+=dy*0.4;yy-=dx*0.4;
+						}
+						index=indexroad;
+						append(
+							roadvertices,[
+							xxx-dx0,yyy-dy0,zzz,
+							xx+dx,yy+dy,zz,
+							xxx+dx0,yyy+dy0,zzz,
+							xxx-dx0,yyy-dy0,zzz,
+							xx-dx,yy-dy,zz,
+							xx+dx,yy+dy,zz
+						]);
+						indexroad=index;
+						s=1;tt=t;t+=dr*0.3;
+						index=itextroad;
+						append(
+							roadtextureCoords,[
+							0,tt,
+							1,t,
+							1,tt,
+							0,tt,
+							0,t,
+							1,t
+						]);
+						itextroad=index;
+					}
+				}
+			} // for j<= jmax
+			//context.stroke();
+		}
+	}// for osm.ways
 
-  gl.bindBuffer(gl.ARRAY_BUFFER, roadVertexPositionBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, (roadvertices), gl.STATIC_DRAW);
-  roadVertexPositionBuffer.itemSize = 3;
-  roadVertexPositionBuffer.numItems = indexroad/3;
+	gl.bindBuffer(gl.ARRAY_BUFFER, roadVertexPositionBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, (roadvertices), gl.STATIC_DRAW);
+	roadVertexPositionBuffer.itemSize = 3;
+	roadVertexPositionBuffer.numItems = indexroad/3;
 
-  gl.bindBuffer(gl.ARRAY_BUFFER, roadVertexTextureCoordBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, (roadtextureCoords), gl.STATIC_DRAW);
-  roadVertexTextureCoordBuffer.itemSize = 2;
-  roadVertexTextureCoordBuffer.numItems = itextroad/2;
+	gl.bindBuffer(gl.ARRAY_BUFFER, roadVertexTextureCoordBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, (roadtextureCoords), gl.STATIC_DRAW);
+	roadVertexTextureCoordBuffer.itemSize = 2;
+	roadVertexTextureCoordBuffer.numItems = itextroad/2;
 
-  gl.bindBuffer(gl.ARRAY_BUFFER, towerVertexPositionBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, (towervertices), gl.STATIC_DRAW);
-  towerVertexPositionBuffer.itemSize = 3;
-  towerVertexPositionBuffer.numItems = indextower/3;
+	gl.bindBuffer(gl.ARRAY_BUFFER, towerVertexPositionBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, (towervertices), gl.STATIC_DRAW);
+	towerVertexPositionBuffer.itemSize = 3;
+	towerVertexPositionBuffer.numItems = indextower/3;
 
-  gl.bindBuffer(gl.ARRAY_BUFFER, towerVertexTextureCoordBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, (towertextureCoords), gl.STATIC_DRAW);
-  towerVertexTextureCoordBuffer.itemSize = 2;
-  towerVertexTextureCoordBuffer.numItems = itexttower/2;
+	gl.bindBuffer(gl.ARRAY_BUFFER, towerVertexTextureCoordBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, (towertextureCoords), gl.STATIC_DRAW);
+	towerVertexTextureCoordBuffer.itemSize = 2;
+	towerVertexTextureCoordBuffer.numItems = itexttower/2;
 
-   /*gl.bindBuffer(gl.ARRAY_BUFFER, houseVertexPositionBuffer);
-   gl.bufferData(gl.ARRAY_BUFFER, (housevertices), gl.STATIC_DRAW);
-   houseVertexPositionBuffer.itemSize = 3;
-   houseVertexPositionBuffer.numItems = indexhouse/3;
+	/*gl.bindBuffer(gl.ARRAY_BUFFER, houseVertexPositionBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, (housevertices), gl.STATIC_DRAW);
+	houseVertexPositionBuffer.itemSize = 3;
+	houseVertexPositionBuffer.numItems = indexhouse/3;
 
-   gl.bindBuffer(gl.ARRAY_BUFFER, houseVertexTextureCoordBuffer);
-   gl.bufferData(gl.ARRAY_BUFFER, (housetextureCoords), gl.STATIC_DRAW);
-   houseVertexTextureCoordBuffer.itemSize = 2;
-   houseVertexTextureCoordBuffer.numItems = itexthouse/2;
-   */
-  gl.bindBuffer(gl.ARRAY_BUFFER, roofVertexPositionBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, (roofvertices), gl.STATIC_DRAW);
-  roofVertexPositionBuffer.itemSize = 3;
-  roofVertexPositionBuffer.numItems = indexroof/3;
+	gl.bindBuffer(gl.ARRAY_BUFFER, houseVertexTextureCoordBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, (housetextureCoords), gl.STATIC_DRAW);
+	houseVertexTextureCoordBuffer.itemSize = 2;
+	houseVertexTextureCoordBuffer.numItems = itexthouse/2;
+	*/
+	gl.bindBuffer(gl.ARRAY_BUFFER, roofVertexPositionBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, (roofvertices), gl.STATIC_DRAW);
+	roofVertexPositionBuffer.itemSize = 3;
+	roofVertexPositionBuffer.numItems = indexroof/3;
 
-  gl.bindBuffer(gl.ARRAY_BUFFER, roofVertexTextureCoordBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, (rooftextureCoords), gl.STATIC_DRAW);
-  roofVertexTextureCoordBuffer.itemSize = 2;
-  roofVertexTextureCoordBuffer.numItems = itextroof/2;
+	gl.bindBuffer(gl.ARRAY_BUFFER, roofVertexTextureCoordBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, (rooftextureCoords), gl.STATIC_DRAW);
+	roofVertexTextureCoordBuffer.itemSize = 2;
+	roofVertexTextureCoordBuffer.numItems = itextroof/2;
 
-   //lat0=lat;lng0=lng;
-  x0=x;y0=y;
+	//lat0=lat;lng0=lng;
+	x0=x;y0=y;
 
-  context.font = "12pt Arial";
-  context.fillStyle = '#ff0000';
-  var latt=parseInt(lat*10000)/10000;
-  var lngg=parseInt(lng*10000)/10000;
-  context.fillText("lat="+latt+" lon="+lngg,20,20);
-  context.fillText("nways="+i+" nnodes="+nnode,20,40);
-  context.fillText("M => map",20,60);
-   //alert("drawways="+i);
-   //loading=0;
+	context.font = "12pt Arial";
+	context.fillStyle = '#ff0000';
+	var latt=parseInt(lat*10000)/10000;
+	var lngg=parseInt(lng*10000)/10000;
+	context.fillText("lat="+latt+" lon="+lngg,20,20);
+	context.fillText("nways="+i+" nnodes="+nnode,20,40);
+	context.fillText("M => map",20,60);
+	//alert("drawways="+i);
+	//loading=0;
 
 } // function drawgl()
 
 
-function addtower(way){
-
-   var xx=0,xxx=0,yy=0,yyy=0,r=1,dr=1;
-   var dxx=0,dyy=0,zz=0,zzz=0;
-   var s=0,t=0,tt=0;
-   var h=1;
-   if(way.tags){
-    if(way.tags.height){h=way.tags.height/6;}
-    else if(way.tags["building:height"]){
-		    h=way.tags["building:height"]/6;
-			}
-    else if(way.tags["building:levels"]){
-		    h=way.tags["building:levels"]/4;
-			}
-   }
-   var jmax=way.nodes.length-1;
-   var larg=1,ilarg=way.nodes[parseInt(jmax/2)];
-   var i0=way.nodes[0];
-   var xmid=0,ymid=0,zmid=0;
-   if(latnodes[ilarg] && latnodes[i0]){
-   	   yyy=(latnodes[i0]-lat0)*scale*2;
-	   xxx=((lonnodes[i0]-lng0)/klon)*scale*2;
-   	   yy=(latnodes[ilarg]-lat0)*scale*2;
-	   xx=((lonnodes[ilarg]-lng0)/klon)*scale*2;
-       larg=Math.max(Math.abs(xx-xxx),Math.abs(yy-yyy));
-	   xmid=(xx+xxx)/2;
-	   ymid=(yy+yyy)/2;
-	   zmid=0;
-   }
-if(h>3){//tower
-   var jstart=0;
-   for(var j=0;j<=jmax;j++){
-     var inode=way.nodes[j];
-	 if(latnodes[inode]){
-	   xxx=xx;yyy=yy;zzz=zz;
-	   yy=(latnodes[inode]-lat0)*scale*2;
-	   xx=((lonnodes[inode]-lng0)/klon)*scale*2;
-	   zz=0;
-	   if(jstart==0){jstart=1;//context.moveTo(xx,yy);
-	   }else{//context.lineTo(xx,yy);
-	        dxx=xx-xxx;dyy=yy-yyy;
-			dr=Math.max(0.00001,Math.sqrt(dxx*dxx+dyy*dyy));
-			index=indextower;
-		    append(towervertices,[
-              xxx,yyy,zzz,
-			  xxx,yyy,zzz+h,
-			  xx,yy,zz,
-			  xxx,yyy,zzz+h,
-			  xx,yy,zz+h,
-			  xx,yy,zz
-            ]);
-			indextower=index;
-			var s0=(parseInt(h*10.5)%10)*400;
-			if(h<=3){s=s0+1+parseInt(h*2);tt=t;t+=2*dr;}
-			else{s=s0+1+parseInt(h*2);tt=t;t+=dr;}
-			index=itexttower;
-		    append(towertextureCoords,[
-			  tt,s0,
-			  tt,s,
-			  t,s0,
-			  tt,s,
-			  t,s,
-			  t,s0
-            ]);
-			itexttower=index;
-		   }
-	 }
-   }
-}else if(larg>12*h){//commercial
-   var jstart=0;
-   for(var j=0;j<=jmax;j++){
-     var inode=way.nodes[j];
-	 if(latnodes[inode]){
-	   xxx=xx;yyy=yy;zzz=zz;
-	   yy=(latnodes[inode]-lat0)*scale*2;
-	   xx=((lonnodes[inode]-lng0)/klon)*scale*2;
-	   zz=0;
-	   if(jstart==0){jstart=1;//context.moveTo(xx,yy);
-	   }else{//context.lineTo(xx,yy);
-	        dxx=xx-xxx;dyy=yy-yyy;
-			dr=Math.max(0.00001,Math.sqrt(dxx*dxx+dyy*dyy));
-			index=indextower;
-		    append(towervertices,[
-              xxx,yyy,zzz,
-			  xxx,yyy,zzz+h,
-			  xx,yy,zz,
-			  xxx,yyy,zzz+h,
-			  xx,yy,zz+h,
-			  xx,yy,zz
-            ]);
-			indextower=index;
-			var s0=(parseInt(h*10.5)%10)*400;
-			if(h<=3){s=s0+1+parseInt(h*2);tt=t;t+=2*dr/3.5;}
-			else{s=s0+1+parseInt(h*2);tt=t;t+=dr/3.5;}
-			index=itexttower;
-		    append(towertextureCoords,[
-			  tt,s0,
-			  tt,s,
-			  t,s0,
-			  tt,s,
-			  t,s,
-			  t,s0
-            ]);
-			itexttower=index;
-		   }
-	 }
-   }
-}else{//house
-   var jstart=0;
-   var xxmin=xmid+999999,xxmax=xmid-999999;
-   var yymin=ymid+999999,yymax=ymid-999999;
-   for(var j=0;j<=jmax;j++){
-     var inode=way.nodes[j];
-	 if(latnodes[inode]){
-	   xxx=xx;yyy=yy;zzz=zz;
-	   yy=(latnodes[inode]-lat0)*scale*2;
-	   xx=((lonnodes[inode]-lng0)/klon)*scale*2;
-	   zz=0;
-	   if(xx<xxmin){xxmin=xx;}
-	   if(xx>xxmax){xxmax=xx;}
-	   if(yy<yymin){yymin=yy;}
-	   if(yy>yymax){yymax=yy;}
-	   if(jstart==0){jstart=1;//context.moveTo(xx,yy);
-	   }else{//context.lineTo(xx,yy);
-	        dxx=xx-xxx;dyy=yy-yyy;
-			dr=Math.max(0.00001,Math.sqrt(dxx*dxx+dyy*dyy));
-			index=indextower;
-		    append(towervertices,[
-              xxx,yyy,zzz,
-			  xxx,yyy,zzz+h,
-			  xx,yy,zz,
-			  xxx,yyy,zzz+h,
-			  xx,yy,zz+h,
-			  xx,yy,zz
-            ]);
-			indextower=index;
-			var s0=(parseInt(h*10.5)%10)*400;
-			if(h<=3){s=s0+1+parseInt(h*2);tt=t;t+=2*dr;}
-			else{s=s0+1+parseInt(h*2);tt=t;t+=dr;}
-			index=itexttower;
-		    append(towertextureCoords,[
-			  tt,s0,
-			  tt,s,
-			  t,s0,
-			  tt,s,
-			  t,s,
-			  t,s0
-            ]);
-			itexttower=index;
-		   }
-	 }
-   }
-   xmid=(xxmin+xxmax)/2;
-   ymid=(yymin+yymax)/2;
-   var hh=h*0.2;
-   hh=Math.max(hh,Math.min(xxmax-xxmin,yymax-yymin)/12);
-   hh=h+hh;
-   tt=0;t=0;
-   for(var j=0;j<=jmax;j++){
-     var inode=way.nodes[j];
-	 if(latnodes[inode]){
-	   xxx=xx;yyy=yy;zzz=zz;
-	   yy=(latnodes[inode]-lat0)*scale*2;
-	   xx=((lonnodes[inode]-lng0)/klon)*scale*2;
-	   zz=0;
-	   if(jstart==0){jstart=1;//context.moveTo(xx,yy);
-	   }else{//context.lineTo(xx,yy);
-	        dxx=xx-xxx;dyy=yy-yyy;
-			dr=Math.max(0.00001,Math.abs(dxx)+Math.abs(dyy));
-			index=indexroof;
-		    append(roofvertices,[
-              xmid,ymid,zmid+hh,
-			  xx,yy,zz+h,
-			  xxx,yyy,zzz+h
-            ]);
-			indexroof=index;
-            tt=t;t+=dr;
-			index=itextroof;
-		    append(rooftextureCoords,[
-			  0.5,1,
-			  t-parseInt(t),0,
-			  tt-parseInt(tt),0
-            ]);
-			itextroof=index;
-		}}
+function addtower(way)
+{
+	var xx=0,xxx=0,yy=0,yyy=0,r=1,dr=1;
+	var dxx=0,dyy=0,zz=0,zzz=0;
+	var s=0,t=0,tt=0;
+	var h=1;
+	if(way.tags){
+		if(way.tags.height){
+			h=way.tags.height/6;
+		}
+		else if(way.tags["building:height"]){
+			h=way.tags["building:height"]/6;
+		}
+		else if(way.tags["building:levels"]){
+			h=way.tags["building:levels"]/4;
+		}
 	}
-}
+
+	var jmax= way.nodes.length-1;
+	var larg=1,
+		ilarg = way.nodes[parseInt(jmax/2)]
+		i0 = way.nodes[0];
+	var xmid=0,ymid=0,zmid=0;
+   
+	if( osm.nodes[ilarg] && osm.nodes[i0] )
+	{
+		yyy=(osm.nodes[i0].lat-lat0)*scale*2;
+		xxx=((osm.nodes[i0].lon-lng0)/klon)*scale*2;
+		yy=(osm.nodes[ilarg].lat-lat0)*scale*2;
+		xx=((osm.nodes[ilarg].lon-lng0)/klon)*scale*2;
+		larg=Math.max(Math.abs(xx-xxx),Math.abs(yy-yyy));
+		xmid=(xx+xxx)/2;
+		ymid=(yy+yyy)/2;
+		zmid=0;
+	}
+
+	if(h>3){//tower
+		dbg('addtower() tower');
+		var jstart=0;
+		for(var j=0;j<=jmax;j++){
+			var inode=way.nodes[j];
+			if(osm.nodes[inode]){
+				xxx=xx;yyy=yy;zzz=zz;
+				yy=(osm.nodes[inode].lat-lat0)*scale*2;
+				xx=((osm.nodes[inode].lon-lng0)/klon)*scale*2;
+				zz=0;
+				if(jstart==0){
+					jstart=1;//context.moveTo(xx,yy);
+				}else{//context.lineTo(xx,yy);
+					dxx=xx-xxx;dyy=yy-yyy;
+					dr=Math.max(0.00001,Math.sqrt(dxx*dxx+dyy*dyy));
+					index=indextower;
+					append(towervertices,[
+					xxx,yyy,zzz,
+					xxx,yyy,zzz+h,
+					xx,yy,zz,
+					xxx,yyy,zzz+h,
+					xx,yy,zz+h,
+					xx,yy,zz
+					]);
+					indextower=index;
+					var s0=(parseInt(h*10.5)%10)*400;
+					if(h<=3){
+						s=s0+1+parseInt(h*2);tt=t;t+=2*dr;
+					}
+					else{
+						s=s0+1+parseInt(h*2);tt=t;t+=dr;
+					}
+					index=itexttower;
+					append(towertextureCoords,[
+						tt,s0,
+						tt,s,
+						t,s0,
+						tt,s,
+						t,s,
+						t,s0
+					]);
+					itexttower=index;
+				}
+			}
+		}
+	}else if(larg>12*h){//commercial
+		dbg('addtower() commercial');
+		var jstart=0;
+		for(var j=0;j<=jmax;j++){
+			var inode=way.nodes[j];
+			if(osm.nodes[inode].lat){
+				xxx=xx;yyy=yy;zzz=zz;
+				yy=(osm.nodes[inode].lat-lat0)*scale*2;
+				xx=((osm.nodes[inode].lon-lng0)/klon)*scale*2;
+				zz=0;
+				if(jstart==0){jstart=1;//context.moveTo(xx,yy);
+				}else{//context.lineTo(xx,yy);
+					dxx=xx-xxx;dyy=yy-yyy;
+					dr=Math.max(0.00001,Math.sqrt(dxx*dxx+dyy*dyy));
+					index=indextower;
+					append(towervertices,[
+					xxx,yyy,zzz,
+					xxx,yyy,zzz+h,
+					xx,yy,zz,
+					xxx,yyy,zzz+h,
+					xx,yy,zz+h,
+					xx,yy,zz
+					]);
+					indextower=index;
+					var s0=(parseInt(h*10.5)%10)*400;
+					if(h<=3){s=s0+1+parseInt(h*2);tt=t;t+=2*dr/3.5;}
+					else{s=s0+1+parseInt(h*2);tt=t;t+=dr/3.5;}
+					index=itexttower;
+					append(towertextureCoords,[
+						tt,s0,
+						tt,s,
+						t,s0,
+						tt,s,
+						t,s,
+						t,s0
+					]);
+					itexttower=index;
+				}
+			}
+		}
+	}else{//house
+		dbg('addtower() house');
+		var jstart=0;
+		var xxmin=xmid+999999,xxmax=xmid-999999;
+		var yymin=ymid+999999,yymax=ymid-999999;
+		for(var j=0;j<=jmax;j++){
+			var inode=way.nodes[j];
+			if(osm.nodes[inode]){
+				xxx=xx;yyy=yy;zzz=zz;
+				yy=(osm.nodes[inode].lat-lat0)*scale*2;
+				xx=((osm.nodes[inode].lon-lng0)/klon)*scale*2;
+				zz=0;
+				if(xx<xxmin){xxmin=xx;}
+				if(xx>xxmax){xxmax=xx;}
+				if(yy<yymin){yymin=yy;}
+				if(yy>yymax){yymax=yy;}
+				if(jstart==0){jstart=1;//context.moveTo(xx,yy);
+				}else{//context.lineTo(xx,yy);
+				dxx=xx-xxx;dyy=yy-yyy;
+				dr=Math.max(0.00001,Math.sqrt(dxx*dxx+dyy*dyy));
+				index=indextower;
+				append(towervertices,[
+				xxx,yyy,zzz,
+				xxx,yyy,zzz+h,
+				xx,yy,zz,
+				xxx,yyy,zzz+h,
+				xx,yy,zz+h,
+				xx,yy,zz
+				]);
+				indextower=index;
+				var s0=(parseInt(h*10.5)%10)*400;
+				if(h<=3){s=s0+1+parseInt(h*2);tt=t;t+=2*dr;}
+				else{s=s0+1+parseInt(h*2);tt=t;t+=dr;}
+					index=itexttower;
+					append(towertextureCoords,[
+						tt,s0,
+						tt,s,
+						t,s0,
+						tt,s,
+						t,s,
+						t,s0
+					]);
+					itexttower=index;
+				}
+			}
+		}
+		xmid=(xxmin+xxmax)/2;
+		ymid=(yymin+yymax)/2;
+		var hh=h*0.2;
+		hh=Math.max(hh,Math.min(xxmax-xxmin,yymax-yymin)/12);
+		hh=h+hh;
+		tt=0;t=0;
+		for(var j=0;j<=jmax;j++){
+			var inode=way.nodes[j];
+			if(osm.nodes[inode]){
+				xxx=xx;yyy=yy;zzz=zz;
+				yy=(osm.nodes[inode].lat-lat0)*scale*2;
+				xx=((osm.nodes[inode].lon-lng0)/klon)*scale*2;
+				zz=0;
+				if(jstart==0){
+					jstart=1;//context.moveTo(xx,yy);
+				}else{//context.lineTo(xx,yy);
+					dxx=xx-xxx;dyy=yy-yyy;
+					dr=Math.max(0.00001,Math.abs(dxx)+Math.abs(dyy));
+					index=indexroof;
+					append(roofvertices,[
+						xmid,ymid,zmid+hh,
+						xx,yy,zz+h,
+						xxx,yyy,zzz+h
+					]);
+					indexroof=index;
+					tt=t;t+=dr;
+					index=itextroof;
+					append(rooftextureCoords,[
+						0.5,1,
+						t-parseInt(t),0,
+						tt-parseInt(tt),0
+					]);
+					itextroof=index;
+				}
+			}
+		}
+	}
 }
 
 var MERCATOR_RANGE = 256;
-function degreesToRadians(deg) {
-  return deg * (Math.PI / 180);
-}
-
-function radiansToDegrees(rad) {
-  return rad / (Math.PI / 180);
-}
 
 var pixeloriginx=MERCATOR_RANGE / 2;
 var pixeloriginy=MERCATOR_RANGE / 2;
@@ -1341,7 +1334,7 @@ function MercatorLatLngtoPoint(lat,lng) {
   pointx = pixeloriginx + lng * pixelsPerLonDegree;
   // NOTE(appleton): Truncating to 0.9999 effectively limits latitude to
   // 89.189.  This is about a third of a tile past the edge of the world tile.
-  var siny=Math.min(Math.max(Math.sin(degreesToRadians(lat)),-0.9999),0.9999);
+  var siny=Math.min(Math.max(Math.sin(degtorad(lat)),-0.9999),0.9999);
   pointy = pixeloriginy+0.5*Math.log((1+siny)/(1-siny))*pixelsPerLonRadian;
 };
 
@@ -1360,8 +1353,11 @@ MercatorLatLngtoPoint(lat,lng);
 worldx=pointx*Math.pow(2,zoom);
 worldy=pointy*Math.pow(2,zoom);
 }
+
 var fullscreen=0;
-function sizescreen(){
+
+function sizescreen()
+{
 	    if(fullscreen==0){fullscreen=1;
 		                  canvas.width  = parseInt(window.innerWidth*0.98);
                           canvas.height = parseInt(window.innerHeight*0.94);
@@ -1382,33 +1378,38 @@ function sizescreen(){
 	tmap=0;
     document.getElementById("msg").focus();
 }
+
 var geolocation="";
-function geolocate(){
-geolocation = "paris france";
-geolocation=window.prompt("flyto : enter address or location");
-//alert("geolocation="+geolocation);
-if (geolocation.length>0){
-  var geocoder = new google.maps.Geocoder();
-  geocoder.geocode( { 'address': geolocation}, function(results, status) {
-    if (status == google.maps.GeocoderStatus.OK) {
-      var latlng=results[0].geometry.location;
-	  lat=latlng.lat();
-	  lng=latlng.lng();
-	  flytolat=lat;flytolng=lng;flytoname=geolocation;
-	  icombo=0;
-	  document.getElementById('combo')[icombo].text=flytoname;
-	  document.getElementById('combo').selectedIndex=icombo;
-      latx=lat;lngx=lng;tmap=0;
-      osm.getways( lat, lng, dlat, dlon );
-    } else {
-      alert('Geolocation not found ! ' + status);
-    }
-  });
+
+function geolocate()
+{
+	geolocation = "paris france";
+	geolocation=window.prompt("flyto : enter address or location");
+	//alert("geolocation="+geolocation);
+	if (geolocation.length>0){
+		var geocoder = new google.maps.Geocoder();
+		geocoder.geocode( { 'address': geolocation}, function(results, status) {
+		if (status == google.maps.GeocoderStatus.OK) {
+		var latlng=results[0].geometry.location;
+		lat=latlng.lat();
+		lng=latlng.lng();
+		flytolat=lat;flytolng=lng;flytoname=geolocation;
+		icombo=0;
+		document.getElementById('combo')[icombo].text=flytoname;
+		document.getElementById('combo').selectedIndex=icombo;
+		latx=lat;lngx=lng;tmap=0;
+		osm.getways( lat, lng, dlat, dlon );
+		} else {
+		alert('Geolocation not found ! ' + status);
+		}
+		});
+	}
+	document.getElementById('msg').focus();
 }
-document.getElementById('msg').focus();
-}
+
 osm.getways( lat, lng, dlat, dlon );
 setTimeout("initwebgl();",1000);
+
 </script>
 </body>
 </html>

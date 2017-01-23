@@ -1,3 +1,19 @@
+/**
+ * 
+ */
+
+var pi180 = Math.PI / 180 ;
+
+function degtorad(degrees)
+{
+	return degrees * pi180;
+}
+/*function degreesToRadians(deg) {
+	return deg * pi180;
+}*/
+function radiansToDegrees(rad) {
+	return rad / pi180;
+}
 
 var xmlhttp;
 
